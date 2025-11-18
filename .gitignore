@@ -1,0 +1,6 @@
+.vscode/
+tests/
+*.log
+build/
+log/
+CMakeList.txt

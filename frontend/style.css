@@ -1,0 +1,165 @@
+/* --- Thiết lập chung --- */
+:root {
+    --bg-dark: #1a1a2e;
+    --bg-light: #2a2a4e;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --accent-blue: #0f4c75;
+    --accent-green: #32a852;
+    --accent-red: #c94c4c;
+    --border-color: #40405f;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    height: 100vh;
+}
+
+/* --- Bố cục chính --- */
+.sidebar {
+    width: 280px;
+    background-color: var(--bg-light);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px 40px;
+    overflow-y: auto;
+}
+
+/* --- Thanh Sidebar --- */
+.sidebar-header h2 {
+    color: white;
+    margin-bottom: 30px;
+}
+
+.control-group {
+    margin-bottom: 30px;
+}
+
+.control-group h3 {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 5px;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background-color: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-align: left;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #1b262c;
+}
+
+button.btn-danger {
+    background-color: var(--accent-red);
+}
+button.btn-danger:hover {
+    background-color: #a03c3c;
+}
+
+/* --- Nội dung chính --- */
+.main-content header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.status-light {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin: 0 10px;
+    display: inline-block;
+}
+.status-offline {
+    background-color: var(--accent-red);
+}
+.status-online {
+    background-color: var(--accent-green);
+}
+
+.output-area {
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.output-area h2 {
+    margin-bottom: 15px;
+}
+
+#output-console {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    padding: 15px;
+    border-radius: 5px;
+    min-height: 300px;
+    white-space: pre-wrap; /* Cho phép xuống dòng */
+    word-wrap: break-word; /* Ngắt từ nếu quá dài */
+    font-family: "Courier New", Courier, monospace;
+}
+
+#screen-display-container {
+    width: 100%;
+    margin-top: 15px;
+}
+#screen-display {
+    max-width: 100%;
+    border-radius: 5px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* --- Responsive cho điện thoại --- */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .main-content {
+        padding: 20px;
+    }
+}
+
+.terminal { max-width:1000px; margin:0 auto; }
+#terminal-output { height:10vh; overflow:auto; background:#050505; padding:1rem; border-radius:6px; white-space:pre-wrap; }
+#terminal-controls { display:flex; gap:0.5rem; margin-top:0.5rem; }
+#terminal-input { flex:1; padding:0.5rem; border-radius:4px; border:1px solid #333; background:#111; color:#eee; }
+button { padding:0.5rem 0.75rem; border-radius:4px; background:#1e90ff; color:#fff; border:none; cursor:pointer; }

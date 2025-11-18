@@ -1,0 +1,37 @@
+body {
+    background-color: #0c0c0c; /* Nền đen tuyền */
+    color: #cccccc;
+    font-family: 'Consolas', 'Monaco', monospace;
+    padding: 20px;
+}
+
+/* Toàn bộ terminal */
+#terminal {
+    width: 100%;
+    height: 90vh;
+    white-space: pre-wrap;   /* Giữ xuống dòng */
+    word-wrap: break-word; /* Tự ngắt từ */
+    margin: 0;
+    font-size: 14px;
+    /* Giúp nó nhận focus để gõ */
+    outline: none; 
+}
+
+/* Dấu nhắc lệnh C:\> */
+.prompt {
+    color: #cccccc;
+}
+
+/* Con trỏ nhấp nháy */
+.cursor {
+    display: inline-block;
+    background-color: #cccccc;
+    width: 8px; /* Độ rộng của con trỏ */
+    /* Hiệu ứng nhấp nháy */
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    from, to { background-color: transparent }
+    50% { background-color: #cccccc }
+}

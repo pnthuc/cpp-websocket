@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng điều khiển Máy chủ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Điều khiển</h2>
+        </div>
+        
+        <div class="control-group">
+            <h3>Hệ thống</h3>
+            <button id="btn-screenshot">Chụp màn hình</button>
+            <button id="btn-shutdown" class="btn-danger">Tắt máy</button>
+            <button id="btn-reset" class="btn-danger">Khởi động lại</button>
+        </div>
+
+        <div class="control-group">
+            <h3>Tiến trình (Process)</h3>
+            <button id="btn-list-processes">Danh sách Processes</button>
+            <button id="btn-list-apps">Danh sách Applications</button>
+            <button id="btn-stop-process">Dừng Process (Cần ID)</button>
+        </div>
+
+        <div class="control-group">
+            <h3>Theo dõi</h3>
+            <button id="btn-keylogger-toggle">Bắt đầu Keylogger</button>
+            <button id="btn-camera-toggle">Bật Camera</button>
+            <button id="btn-screen-toggle">Bật Màn hình</button>
+        </div>
+
+        <div class="control-group">
+            <h3>terminal</h3>
+            <button id="btn-open-terminal">Mở Terminal</button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header>
+            <h1>Trạng thái máy chủ: <span id="status-light" class="status-offline"></span> <span id="status-text">Đã ngắt kết nối</span></h1>
+        </header>
+        
+
+        <div class="output-area">
+            <h2>Kết quả:</h2>
+            
+            <!-- <div id="image-display-container" class="hidden">
+                <img id="image-display" src="" alt="Ảnh chụp màn hình">
+            </div> -->
+
+            <pre id="output-console">Chưa có dữ liệu...</pre>
+        </div>
+
+        <div class="output-area hidden" id="output-area">
+            <h2>Camera:</h2>
+
+            <div id="screen-display-container" class="hidden">
+                <img id="screen-display" src="" alt="Màn hình máy chủ">
+            </div>
+
+            <pre id="output-console-recording">Chưa có dữ liệu...</pre>
+        </div>
+
+        <div class="output-area hidden" id="camera-area">
+            <h2>Màn hình:</h2>
+
+            <div id="camera-display-container" class="hidden">
+                <img id="camera-display" src="" alt="Camera máy chủ">
+            </div>
+
+            <pre id="output-console-camera">Chưa có dữ liệu...</pre>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
