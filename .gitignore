@@ -3,4 +3,4 @@ tests/
 *.log
 build/
 log/
-CMakeList.txt
+CMakeLists.txt
