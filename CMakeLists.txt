@@ -1,18 +1,12 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 project(beast_demo LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
-# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-
-# Tìm các thư viện
 find_package(Boost REQUIRED COMPONENTS system filesystem thread)
 find_package(OpenCV REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-# Tạo library features
 add_library(features
     src/utils/keylogger.cpp
     src/utils/screen.cpp
@@ -29,23 +23,19 @@ add_library(features
     src/utils/announce.cpp
 )
 
-# Include directories
 target_include_directories(features PUBLIC 
-    ${CMAKE_SOURCE_DIR}/include        # thư mục include riêng của project
-    ${Boost_INCLUDE_DIRS}              # Boost
-    ${OpenCV_INCLUDE_DIRS}             # OpenCV
-    C:/Users/pnthu/vcpkg/installed/x64-mingw-dynamic/include  # spdlog & nlohmann-json
-    C:/Users/pnthu/vcpkg/installed/x64-mingw-dynamic/include/opencv4
+    ${CMAKE_SOURCE_DIR}/include       
+    ${Boost_INCLUDE_DIRS}              
+    ${OpenCV_INCLUDE_DIRS}             
 )
 target_compile_definitions(features PUBLIC FMT_HEADER_ONLY)
-# Link libraries cho features
+
 target_link_libraries(features PRIVATE
     Boost::system
     Boost::boost
     Boost::filesystem
     Boost::thread
-    # fmt::fmt
-    ${OpenCV_LIBS}  # OpenCV MinGW
+    ${OpenCV_LIBS} 
     ws2_32
     gdi32
     user32
@@ -54,7 +44,6 @@ target_link_libraries(features PRIVATE
 )
 
 add_executable(main src/main.cpp)
-
 target_link_libraries(main PRIVATE features)
 
 if(MINGW)
@@ -66,7 +55,6 @@ if(MINGW)
         "${MINGW_BIN_DIR}/libwinpthread-1.dll"
     )
 
-    # 3. Thêm một lệnh "sau khi build" để copy các file này
     add_custom_command(
         TARGET main POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -75,5 +63,3 @@ if(MINGW)
         COMMENT "Copying MinGW runtime DLLs..."
     )
 endif()
-
-# cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:/Users/pnthu/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic -DCMAKE_BUILD_TYPE=Release
