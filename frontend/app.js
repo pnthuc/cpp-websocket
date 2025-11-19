@@ -6,7 +6,6 @@ let currentPath = "C:\\";
 const ws = new WebSocket("ws://localhost:8080");
 
 function buildCurrentLineHTML() {
-    // DÙNG escapeHTML() cho cả 2 biến
     const safePath = escapeHTML(currentPath);
     const safeCommand = escapeHTML(currentCommand);
     return `<span id="current-line"><span class="prompt">${safePath}></span> ${safeCommand}<span class="cursor"> </span></span>`;
@@ -30,7 +29,6 @@ function appendOutput(text) {
         currentLine.remove();
     }
     
-    // DÙNG escapeHTML() ở đây!
     terminal.innerHTML += escapeHTML(text) + buildCurrentLineHTML();
     scrollToBottom();
 }
@@ -50,7 +48,7 @@ function scrollToBottom() {
 
 ws.onopen = () => {
     console.log("Connected");
-    terminal.innerHTML = '--- Da ket noi den server C++ ---\n' + buildCurrentLineHTML();
+    terminal.innerHTML = '--- Connected to server C++ ---\n' + buildCurrentLineHTML();
     terminal.focus(); 
 };
 
@@ -70,7 +68,7 @@ ws.onmessage = (event) => {
 };
 
 ws.onclose = () => {
-    appendOutput("--- Da mat ket noi voi server ---\n");
+    appendOutput("--- Disconnected from server ---\n");
 };
 
 document.addEventListener("keydown", (event) => {
@@ -98,7 +96,7 @@ document.addEventListener("keydown", (event) => {
             updateCurrentLine(); 
         }
     } else if (event.ctrlKey || event.altKey || event.metaKey) {
-        // Bỏ qua
+        // Ignore
     } else if (key.length === 1) {
         currentCommand += key;
         updateCurrentLine(); 

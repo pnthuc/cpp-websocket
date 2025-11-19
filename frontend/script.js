@@ -1,7 +1,4 @@
-// Chờ cho toàn bộ trang web được tải xong
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Lấy các phần tử (elements) ---
-    // Nút bấm
     const btnScreenshot = document.getElementById('btn-screenshot');
     const btnShutdown = document.getElementById('btn-shutdown');
     const btnReset = document.getElementById('btn-reset');
@@ -12,30 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCamera = document.getElementById('btn-camera-toggle');
     const btnScreen = document.getElementById('btn-screen-toggle');
     const btnOpenTerminal = document.getElementById('btn-open-terminal');
-    // Vùng hiển thị
+
     const outputConsole = document.getElementById('output-console');
     const outputConsoleRecording = document.getElementById('output-console-recording');
     const outputConsoleCamera = document.getElementById('output-console-camera');
-    // const imgContainer = document.getElementById('image-display-container');
-    // const imgDisplay = document.getElementById('image-display');
+
     const statusText = document.getElementById('status-text');
     const statusLight = document.getElementById('status-light');
     const scrContainer = document.getElementById('screen-display-container');
     const scrDisplay = document.getElementById('screen-display');
     const camContainer = document.getElementById('camera-display-container');
     const camDisplay = document.getElementById('camera-display');
-
-    // (Đây là nơi bạn sẽ khởi tạo kết nối WebSocket)
-    // const socket = new WebSocket("ws://your-server-ip:port");
-    // ...
-    // (Và xử lý các sự kiện socket.onopen, socket.onmessage, ...)
-    // Ví dụ, khi kết nối thành công:
-    // statusText.textContent = "Đã kết nối";
-    // statusLight.className = "status-light status-online";
-
-    // --- Gán sự kiện click cho các nút ---
-
-    // Gửi lệnh JSON qua WebSocket
 
     const socket = new WebSocket("ws://localhost:8080");
 
@@ -138,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Gửi lệnh:", command);
         socket.send(JSON.stringify(command));
         outputConsole.textContent = `[GỬI LỆNH]: ${JSON.stringify(command)}\n...Chờ phản hồi...`;
-        // imgContainer.classList.add('hidden'); // Ẩn khung ảnh
     }
 
     btnScreenshot.addEventListener('click', () => {

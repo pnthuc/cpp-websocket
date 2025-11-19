@@ -24,7 +24,6 @@ body {
     height: 100vh;
 }
 
-/* --- Bố cục chính --- */
 .sidebar {
     width: 280px;
     background-color: var(--bg-light);
@@ -40,7 +39,6 @@ body {
     overflow-y: auto;
 }
 
-/* --- Thanh Sidebar --- */
 .sidebar-header h2 {
     color: white;
     margin-bottom: 30px;
@@ -86,7 +84,6 @@ button.btn-danger:hover {
     background-color: #a03c3c;
 }
 
-/* --- Nội dung chính --- */
 .main-content header {
     display: flex;
     align-items: center;
@@ -124,8 +121,8 @@ button.btn-danger:hover {
     padding: 15px;
     border-radius: 5px;
     min-height: 300px;
-    white-space: pre-wrap; /* Cho phép xuống dòng */
-    word-wrap: break-word; /* Ngắt từ nếu quá dài */
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
     font-family: "Courier New", Courier, monospace;
 }
 
@@ -142,7 +139,6 @@ button.btn-danger:hover {
     display: none;
 }
 
-/* --- Responsive cho điện thoại --- */
 @media (max-width: 768px) {
     body {
         flex-direction: column;
