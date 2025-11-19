@@ -1,7 +1,4 @@
 #include "terminal.h"
-#include <vector>
-#include <algorithm>
-#include <cctype>
 
 void executeCommand(const std::string& command, const std::string& path, websocket::stream<tcp::socket>& ws) {
     std::string fullCommand = "cd /d \"" + path + "\" && " + command + " 2>&1 & cd";
@@ -9,9 +6,7 @@ void executeCommand(const std::string& command, const std::string& path, websock
     std::string result;
 
     FILE* pipe = _popen(fullCommand.c_str(), "r");
-    if (!pipe) {
-        return;
-    }
+    if (!pipe) return;
 
     auto trim_copy = [](const std::string& s) {
         size_t start = 0;
@@ -21,9 +16,8 @@ void executeCommand(const std::string& command, const std::string& path, websock
         return s.substr(start, end - start);
     };
 
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) 
         result += buffer.data();
-    }
 
     _pclose(pipe);
 
@@ -58,17 +52,16 @@ void executeCommand(const std::string& command, const std::string& path, websock
             if (!infoResult.empty()) infoResult += "\n";
             infoResult += lines[i];
         }
-    } else {
+    } else 
         infoResult = result; 
-    }
 
-    if (!finalDir.empty()) {
+    if (!finalDir.empty()) 
         try {
             std::filesystem::current_path(finalDir);
         } catch (...) {}
-    }
 
     sendMsg(ws, "text", "Info", infoResult);
     sendMsg(ws, "text", "PATH", std::filesystem::current_path().string());
+    file_logger->info("Executed command: {}", command);
     return;
 }

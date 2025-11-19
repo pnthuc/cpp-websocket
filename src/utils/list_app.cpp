@@ -1,19 +1,10 @@
 #include "list_app.h"
-
-std::string wstring_to_string(const std::wstring& wstr) {
-    if (wstr.empty()) return {};
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(),
-                                          (int)wstr.size(), nullptr, 0, nullptr, nullptr);
-    std::string strTo(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(),
-                        (int)wstr.size(), &strTo[0], size_needed, nullptr, nullptr);
-    return strTo;
-}
+#include "encode.h" 
 
 std::map<DWORD, std::string> getParentProcesses() {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        std::cerr << "CreateToolhelp32Snapshot failed!" << std::endl;
+        file_logger->error("Failed to create process snapshot for listing applications.");
         return {};
     }
 
@@ -32,7 +23,8 @@ std::map<DWORD, std::string> getParentProcesses() {
         ProcessInfo info;
         info.pid = pe32.th32ProcessID;
         info.parentPid = pe32.th32ParentProcessID;
-        info.name = wstring_to_string(pe32.szExeFile);
+        
+        info.name = WinEncoding::ToUtf8(pe32.szExeFile);
         allProcesses[info.pid] = info;
 
         if (info.parentPid > 0)
@@ -56,7 +48,6 @@ std::map<DWORD, std::string> getParentProcesses() {
     return rootProcesses;
 }
 
-// === Hàm gửi danh sách ứng dụng qua WebSocket ===
 void list_applications(websocket::stream<tcp::socket>& ws) {
     std::map<DWORD, std::string> applications = getParentProcesses();
     std::string binaryData;
@@ -64,7 +55,7 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
     constexpr size_t NAME_WIDTH = 40;
     constexpr size_t PID_WIDTH  = 8;
 
-    binaryData += "--- Cac Ung Dung Goc (Process Cha) ---\n";
+    binaryData += "--- Parent Processes (Apps) ---\n";
     binaryData += "Name";
     if (NAME_WIDTH > 4) binaryData.append(NAME_WIDTH - 4, ' ');
     binaryData += "PID\n";
@@ -84,14 +75,15 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
         if (pid.size() < PID_WIDTH)
             pid_padded.append(PID_WIDTH - pid.size(), ' ');
         pid_padded += pid;
-
         binaryData += name_padded + pid_padded + "\n";
     }
 
     if (!binaryData.empty()) {
         sendMsg(ws, "binary", "Applications", 
                 std::vector<BYTE>(binaryData.begin(), binaryData.end()));
+        file_logger->info("Listed applications.");
     } else {
         sendMsg(ws, "text", "Info", "No applications found.");
+        file_logger->info("No applications found.");
     }
 }

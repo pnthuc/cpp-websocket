@@ -35,9 +35,7 @@ cv::Mat captureScreenMat() {
 }
 
 void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
-
     std::lock_guard<std::mutex> lock(g_control_mutex);
-
     if (g_screen.load()) return; 
     g_screen = true;
 
@@ -51,51 +49,45 @@ void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
 
                 cv::Mat smallFrame;
                 cv::resize(frame, smallFrame, cv::Size(frame.cols / 3 * 2, frame.rows / 3 * 2));
-
                 buf.clear();
                 cv::imencode(".jpg", smallFrame, buf, {cv::IMWRITE_JPEG_QUALITY, 100});
 
                 try {
-                    // std::lock_guard<std::mutex> lock(ws_mutex);
                     sendMsg(*ws_ptr, "binary", "Screen", buf);
                 } catch (std::exception& e) {
-                    std::cerr << "WebSocket write error: " << e.what() << "\n";
+                    file_logger->error("WebSocket write error in screen thread: {}", e.what());
                     break;
                 }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
             }
         } catch (std::exception& e) {
-            std::cerr << "Screen thread exception: " << e.what() << "\n";
+            file_logger->error("Screen thread exception: {}", e.what());
         }
 
         g_screen = false;
-        std::cout << "Screen thread stopped.\n";
+        file_logger->info("Screen thread stopped.");
     });
 }
 
 void stopScreen() {
-
     std::lock_guard<std::mutex> lock(g_control_mutex);
-
-    if (!g_screen.load()) {
+    if (!g_screen.load()) 
         return;
-    }
 
     g_screen = false;
-
     std::thread temp_thread = std::move(screen_thread); 
 
     std::thread([t = std::move(temp_thread)]() mutable { 
         try {
             if (t.joinable()) {
                 t.join(); 
-                std::cout << "Reaper: Screen thread joined." << std::endl;
+                file_logger->info("Reaper: Screen thread joined.");
             }
         } catch (const std::exception& e) {
-            std::cerr << "Reaper: Exception caught joining screen thread: " << e.what() << std::endl;        
+            file_logger->error("Reaper: Exception caught joining screen thread: {}", e.what());
         } catch (...) {
-            std::cerr << "Reaper: Unknown exception caught joining screen thread." << std::endl;        
+            file_logger->error("Reaper: Unknown exception caught joining screen thread.");
         }
     }).detach(); 
 

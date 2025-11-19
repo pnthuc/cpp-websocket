@@ -33,8 +33,10 @@ void captureScreenshot(websocket::stream<tcp::socket>& ws) {
     if (GetDIBits(hMemDC, hBitmap, 0, height, buffer.data() + bfh->bfOffBits,
                     reinterpret_cast<BITMAPINFO*>(bihOut), DIB_RGB_COLORS) == 0) {
         sendMsg(ws, "text", "Error", "Failed to capture screenshot.");
+        file_logger->error("Failed to capture screenshot.");
     } else {
         sendMsg(ws, "binary", "Screenshot", buffer);
+        file_logger->info("Screenshot captured and sent.");
     }
 
     SelectObject(hMemDC, hOld);

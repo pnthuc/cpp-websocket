@@ -1,4 +1,3 @@
-// base64.h
 #pragma once
 #include <string>
 

@@ -1,8 +1,6 @@
 #pragma once
 #include "lib.h"
-
-using tcp = boost::asio::ip::tcp;
-namespace websocket = boost::beast::websocket;
+#include <tlhelp32.h>
 
 struct ProcessInfo {
     DWORD pid;
