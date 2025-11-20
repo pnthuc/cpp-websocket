@@ -28,11 +28,11 @@ void list_processes(websocket::stream<tcp::socket>& ws) {
     constexpr size_t PID_WIDTH  = 8;
 
     if (!processes.empty()) {
-        binaryData += "--- Process List ---\n";
-        binaryData += "Name";
-        if (NAME_WIDTH > 4) binaryData.append(NAME_WIDTH - 4, ' ');
-        binaryData += "PID\n";
-        binaryData += std::string(NAME_WIDTH + PID_WIDTH, '-') + "\n";
+        // binaryData += "--- Process List ---\n";
+        // binaryData += "Name";
+        // if (NAME_WIDTH > 4) binaryData.append(NAME_WIDTH - 4, ' ');
+        // binaryData += "PID\n";
+        // binaryData += std::string(NAME_WIDTH + PID_WIDTH, '-') + "\n";
 
         for (const auto& app : processes) {
             std::string name = app.second;

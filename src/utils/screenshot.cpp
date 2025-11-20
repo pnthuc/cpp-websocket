@@ -1,8 +1,9 @@
 #include "screenshot.h"
 
 void captureScreenshot(websocket::stream<tcp::socket>& ws) {
-    int width = 2650;
-    int height = 1600;
+    // get current primary screen resolution
+    int width = GetSystemMetrics(SM_CXSCREEN);
+    int height = GetSystemMetrics(SM_CYSCREEN);
     HDC hScreenDC = GetDC(NULL);
     HDC hMemDC = CreateCompatibleDC(hScreenDC);
     HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, width, height);

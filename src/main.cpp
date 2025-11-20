@@ -27,12 +27,38 @@
 #include "list_proc.h"
 #include "terminal.h"
 #include "announce.h"
+#include "systeminfo.h"
+
 
 void session(tcp::socket socket) {
+    // SystemMonitor sysMonitor;
+    auto sysMonitor = std::make_shared<SystemMonitor>();
     try {
         auto ws_ptr = std::make_shared<websocket::stream<tcp::socket>>(std::move(socket));
         ws_ptr->accept();
         sendMsg(*ws_ptr, "text", "PATH", std::filesystem::current_path().string());
+
+        std::thread statsThread([ws_ptr, sysMonitor]() {
+            try {
+                while (true) { 
+                    double cpu = sysMonitor->getCpuUsage();
+                    auto ram = sysMonitor->getRamUsage();
+                    std::string uptime = sysMonitor->getSystemUptime();
+
+                    std::string jsonMsg = "{\"cpu\":" + std::to_string(cpu) + 
+                                        ",\"ram_percent\":" + std::to_string(ram.percent) + 
+                                        ",\"ram_used_gb\":" + std::to_string(ram.usedGB) + 
+                                        ",\"ram_total_gb\":" + std::to_string(ram.totalGB) + 
+                                        ",\"uptime\":\"" + uptime + "\"}";
+
+                    sendMsg(*ws_ptr, "sysinfo", "SYS", jsonMsg);
+
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+            } catch (...) {}
+        });
+        statsThread.detach();
+
         for (;;) {
             beast::flat_buffer buffer;
             ws_ptr->read(buffer);
@@ -117,9 +143,7 @@ int main() {
         net::io_context ioc;
         tcp::acceptor acceptor(ioc, {tcp::v4(), 8080});
         spdlog::flush_on(spdlog::level::info);
-
         file_logger->info("Server running at ws://localhost:8080");
-        
         std::thread(announce_once).detach();
 
         for (;;) {

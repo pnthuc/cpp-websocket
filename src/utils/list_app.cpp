@@ -55,11 +55,11 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
     constexpr size_t NAME_WIDTH = 40;
     constexpr size_t PID_WIDTH  = 8;
 
-    binaryData += "--- Parent Processes (Apps) ---\n";
-    binaryData += "Name";
-    if (NAME_WIDTH > 4) binaryData.append(NAME_WIDTH - 4, ' ');
-    binaryData += "PID\n";
-    binaryData += std::string(NAME_WIDTH + PID_WIDTH, '-') + "\n";
+    // binaryData += "--- Parent Processes (Apps) ---\n";
+    // binaryData += "Name";
+    // if (NAME_WIDTH > 4) binaryData.append(NAME_WIDTH - 4, ' ');
+    // binaryData += "PID\n";
+    // binaryData += std::string(NAME_WIDTH + PID_WIDTH, '-') + "\n";
     
     for (const auto& app : applications) {
         std::string name = app.second;
@@ -71,11 +71,11 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
         if (name_padded.size() < NAME_WIDTH)
             name_padded.append(NAME_WIDTH - name_padded.size(), ' ');
 
-        std::string pid_padded;
-        if (pid.size() < PID_WIDTH)
-            pid_padded.append(PID_WIDTH - pid.size(), ' ');
-        pid_padded += pid;
-        binaryData += name_padded + pid_padded + "\n";
+        // std::string pid_padded;
+        // if (pid.size() < PID_WIDTH)
+        //     pid_padded.append(PID_WIDTH - pid.size(), ' ');
+        // pid_padded += pid;
+        binaryData += name_padded + "\n";
     }
 
     if (!binaryData.empty()) {

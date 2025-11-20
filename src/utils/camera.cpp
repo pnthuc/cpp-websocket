@@ -34,7 +34,7 @@ void startCamera(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
                         break;
                     }
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
             if (camera_ok) 
                 cap.release();

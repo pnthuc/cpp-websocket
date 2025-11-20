@@ -59,7 +59,7 @@ void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
                     break;
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
+                std::this_thread::sleep_for(std::chrono::milliseconds(5)); 
             }
         } catch (std::exception& e) {
             file_logger->error("Screen thread exception: {}", e.what());
