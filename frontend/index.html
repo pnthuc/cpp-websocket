@@ -21,13 +21,17 @@
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         
-        /* Toggle Switch Animation */
+        /* --- TOGGLE SWITCH ANIMATION (FIXED) --- */
         .toggle-checkbox:checked {
             right: 0;
             border-color: #10b981;
         }
         .toggle-checkbox:checked + .toggle-label {
             background-color: #10b981; /* Green when checked */
+        }
+        /* Sửa lỗi: Thêm rule để di chuyển chấm tròn khi bật */
+        .toggle-checkbox:checked ~ .dot {
+            transform: translateX(100%);
         }
         
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -96,7 +100,7 @@
             <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <i class="ph ph-cpu text-xl"></i>
             </div>
-            <h1 class="text-lg font-bold tracking-wide">Sechteam<span class="text-indigo-400">Pro</span></h1>
+            <h1 class="text-lg font-bold tracking-wide">NetAdmin<span class="text-indigo-400">Pro</span></h1>
         </div>
 
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -402,17 +406,14 @@
             }
         }
         
-        // --- FIX: Robust decode function to handle both Base64 and Raw Text ---
         function decodeBinary(input) {
             try {
-                // Try parsing as Base64
                 const binary = atob(input);
                 const len = binary.length;
                 const bytes = new Uint8Array(len);
                 for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
                 return new TextDecoder('utf-8').decode(bytes);
             } catch (e) {
-                // If failed, assume it's already plain text
                 return input;
             }
         }
@@ -683,13 +684,11 @@
                     }
                 } 
                 else if (data.what === "Processes") {
-                    // FIX: Use robust decodeBinary here
                     const decoded = decodeBinary(data.message);
                     renderProcessList(decoded);
                     showToast("Đã cập nhật danh sách Process");
                 } 
                 else if (data.what === "Applications") {
-                    // FIX: Use robust decodeBinary here
                     const decoded = decodeBinary(data.message);
                     renderAppList(decoded);
                     showToast("Đã cập nhật danh sách Ứng dụng");
