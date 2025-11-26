@@ -63,5 +63,6 @@ void executeCommand(const std::string& command, const std::string& path, websock
     sendMsg(ws, "text", "Info", infoResult);
     sendMsg(ws, "text", "PATH", std::filesystem::current_path().string());
     file_logger->info("Executed command: {}", command);
+    std::cerr << "Executed command: " << command << std::endl;
     return;
 }

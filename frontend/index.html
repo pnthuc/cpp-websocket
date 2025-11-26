@@ -4,146 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remote Admin Dashboard</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Inter', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-        
-        /* --- TOGGLE SWITCH ANIMATION (FIXED) --- */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #10b981;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #10b981; /* Green when checked */
-        }
-        /* Sửa lỗi: Thêm rule để di chuyển chấm tròn khi bật */
-        .toggle-checkbox:checked ~ .dot {
-            transform: translateX(100%);
-        }
-        
+        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+        .toggle-checkbox:checked ~ .dot { transform: translateX(100%); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- TERMINAL STYLES --- */
-        #terminal-container {
-            outline: none;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            line-height: 1.5; 
-        }
-
-        .term-line {
-            min-height: 1.5em;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .term-input-line {
-            display: flex;
-            align-items: baseline; 
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 1em;
-            background-color: #e5e7eb;
-            animation: blink 1s step-end infinite;
-            vertical-align: text-bottom; 
-            margin-left: 1px;
-        }
+        #terminal-container { outline: none; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; }
+        .term-line { min-height: 1.5em; white-space: pre-wrap; word-break: break-all; }
+        .term-input-line { display: flex; align-items: baseline; white-space: pre-wrap; word-break: break-all; }
+        .cursor { display: inline-block; width: 8px; height: 1em; background-color: #e5e7eb; animation: blink 1s step-end infinite; vertical-align: text-bottom; margin-left: 1px; }
         @keyframes blink { 50% { opacity: 0; } }
-        
-        .prompt {
-            color: #4ade80; 
-            font-weight: bold;
-            margin-right: 8px; 
-            flex-shrink: 0; 
-        }
+        .prompt { color: #4ade80; font-weight: bold; margin-right: 8px; flex-shrink: 0; }
     </style>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gray: {
-                            900: '#111827',
-                            800: '#1f2937',
-                            700: '#374151',
-                        }
-                    }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { gray: { 900: '#111827', 800: '#1f2937', 700: '#374151' } } } } }
     </script>
 </head>
 <body class="bg-gray-900 text-white h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
 
-    <!-- Sidebar -->
     <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
         <div class="p-6 flex items-center gap-3 border-b border-gray-700">
-            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <i class="ph ph-cpu text-xl"></i>
-            </div>
-            <h1 class="text-lg font-bold tracking-wide">NetAdmin<span class="text-indigo-400">Pro</span></h1>
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><i class="ph ph-cpu text-xl"></i></div>
+            <h1 class="text-lg font-bold tracking-wide">CPPWeb<span class="text-indigo-400">Soc</span></h1>
         </div>
-
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-            <!-- Dashboard -->
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-gray-700 text-white transition-colors">
-                <i class="ph ph-squares-four text-lg"></i> Tổng quan
-            </button>
-            
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-gray-700 text-white transition-colors"><i class="ph ph-squares-four text-lg"></i> Tổng quan</button>
             <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Giám sát</div>
-            
-            <!-- Surveillance -->
-            <button onclick="switchTab('surveillance')" id="nav-surveillance" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                <i class="ph ph-eye text-lg"></i> Camera / Màn hình
-            </button>
-            <button onclick="switchTab('keylogger')" id="nav-keylogger" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                <i class="ph ph-keyboard text-lg"></i> Keylogger
-            </button>
-
+            <button onclick="switchTab('surveillance')" id="nav-surveillance" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-eye text-lg"></i> Camera / Màn hình</button>
+            <button onclick="switchTab('keylogger')" id="nav-keylogger" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-keyboard text-lg"></i> Keylogger</button>
             <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Hệ thống</div>
-
-            <!-- Processes -->
-            <button onclick="switchTab('processes')" id="nav-processes" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                <i class="ph ph-chart-bar text-lg"></i> Processes
-            </button>
-            <!-- Applications -->
-            <button onclick="switchTab('applications')" id="nav-applications" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                <i class="ph ph-app-window text-lg"></i> Applications
-            </button>
-            <!-- Terminal -->
-            <button onclick="switchTab('terminal')" id="nav-terminal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                <i class="ph ph-terminal-window text-lg"></i> Terminal
-            </button>
+            <button onclick="switchTab('processes')" id="nav-processes" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-chart-bar text-lg"></i> Processes</button>
+            <button onclick="switchTab('applications')" id="nav-applications" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-app-window text-lg"></i> Applications</button>
+            <button onclick="switchTab('terminal')" id="nav-terminal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-terminal-window text-lg"></i> Terminal</button>
         </nav>
-
         <div class="p-4 border-t border-gray-700">
-            <!-- Server Selector -->
             <div class="mb-3">
                 <label class="text-xs text-gray-400 uppercase font-semibold block mb-1">Chọn thiết bị</label>
-                <select id="device-selector" class="w-full bg-gray-900 border border-gray-600 text-white text-xs rounded p-2 outline-none focus:border-indigo-500">
-                    <option value="">-- Scanning --</option>
-                </select>
+                <select id="device-selector" class="w-full bg-gray-900 border border-gray-600 text-white text-xs rounded p-2 outline-none focus:border-indigo-500"><option value="">-- Scanning --</option></select>
             </div>
-
             <div class="flex items-center gap-3">
                 <div id="ws-status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
                 <span class="text-sm text-gray-400">Status: <span id="ws-status-text" class="text-white font-medium">Disconnected</span></span>
@@ -151,133 +60,65 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <!-- Top Header -->
         <header class="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-8 shadow-sm z-10">
             <h2 class="text-xl font-semibold text-white" id="page-title">Tổng quan hệ thống</h2>
-            
             <div class="flex items-center gap-4">
-                <button onclick="handleScreenshot()" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white px-4 py-2 rounded text-sm transition shadow-sm">
-                    <i class="ph ph-camera"></i> Chụp màn hình
-                </button>
-                <button onclick="handleRestart()" class="text-gray-400 hover:text-yellow-500 p-2 rounded-full hover:bg-gray-800 transition" title="Khởi động lại">
-                    <i class="ph ph-arrow-counter-clockwise text-xl"></i>
-                </button>
-                <button onclick="handleShutdown()" class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-gray-800 transition" title="Tắt máy">
-                    <i class="ph ph-power text-xl"></i>
-                </button>
+                <button onclick="handleScreenshot()" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white px-4 py-2 rounded text-sm transition shadow-sm"><i class="ph ph-camera"></i> Chụp màn hình</button>
+                <button onclick="handleRestart()" class="text-gray-400 hover:text-yellow-500 p-2 rounded-full hover:bg-gray-800 transition" title="Khởi động lại"><i class="ph ph-arrow-counter-clockwise text-xl"></i></button>
+                <button onclick="handleShutdown()" class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-gray-800 transition" title="Tắt máy"><i class="ph ph-power text-xl"></i></button>
             </div>
         </header>
 
-        <!-- Content Area -->
         <div class="flex-1 overflow-y-auto p-8 bg-gray-900" id="content-area">
-            
             <!-- DASHBOARD TAB -->
             <div id="tab-dashboard" class="space-y-6 fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Card CPU -->
                     <div class="bg-gray-800 p-6 rounded-lg border border-gray-700/50 shadow-lg relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-gray-400 text-sm font-medium">CPU Usage</p>
-                                <h3 class="text-3xl font-bold text-white mt-1" id="cpu-value">0%</h3>
-                            </div>
-                            <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-                                <i class="ph ph-cpu text-2xl"></i>
-                            </div>
-                        </div>
-                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                            <div id="cpu-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-                        </div>
+                        <div class="flex justify-between items-start mb-4"><div><p class="text-gray-400 text-sm font-medium">CPU Usage</p><h3 class="text-3xl font-bold text-white mt-1" id="cpu-value">0%</h3></div><div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><i class="ph ph-cpu text-2xl"></i></div></div>
+                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden"><div id="cpu-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div></div>
                     </div>
-                    <!-- Card RAM -->
                     <div class="bg-gray-800 p-6 rounded-lg border border-gray-700/50 shadow-lg relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-gray-400 text-sm font-medium">RAM Usage</p>
-                                <h3 class="text-3xl font-bold text-white mt-1">
-                                    <span id="ram-value">0</span>
-                                    <span class="text-lg text-gray-500 font-normal" id="ram-total">/ 0 GB</span>
-                                </h3>
-                            </div>
-                            <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-                                <i class="ph ph-memory text-2xl"></i>
-                            </div>
-                        </div>
-                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                            <div id="ram-bar" class="bg-purple-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-                        </div>
+                        <div class="flex justify-between items-start mb-4"><div><p class="text-gray-400 text-sm font-medium">RAM Usage</p><h3 class="text-3xl font-bold text-white mt-1"><span id="ram-value">0</span><span class="text-lg text-gray-500 font-normal" id="ram-total">/ 0 GB</span></h3></div><div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg"><i class="ph ph-memory text-2xl"></i></div></div>
+                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden"><div id="ram-bar" class="bg-purple-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div></div>
                     </div>
-                    <!-- Card Uptime -->
                     <div class="bg-gray-800 p-6 rounded-lg border border-gray-700/50 shadow-lg relative overflow-hidden">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-gray-400 text-sm font-medium">System Uptime</p>
-                                <h3 class="text-3xl font-bold text-white mt-1" id="uptime-value">--</h3>
-                            </div>
-                            <div class="p-2 bg-green-500/10 text-green-400 rounded-lg">
-                                <i class="ph ph-clock text-2xl"></i>
-                            </div>
-                        </div>
+                        <div class="flex justify-between items-start mb-4"><div><p class="text-gray-400 text-sm font-medium">System Uptime</p><h3 class="text-3xl font-bold text-white mt-1" id="uptime-value">--</h3></div><div class="p-2 bg-green-500/10 text-green-400 rounded-lg"><i class="ph ph-clock text-2xl"></i></div></div>
                         <p class="text-xs text-gray-500">Live monitoring</p>
                     </div>
                 </div>
-
-                <!-- Recent Activity Log -->
                 <div class="bg-gray-800 rounded-lg border border-gray-700/50 shadow-lg overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-700/50">
-                        <h3 class="font-semibold text-white text-sm uppercase tracking-wide">Hoạt động gần đây</h3>
-                    </div>
-                    <div class="p-6" id="system-logs">
-                        <div class="text-gray-500 italic text-sm" id="empty-logs-msg">Chưa có hoạt động nào...</div>
-                    </div>
+                    <div class="px-6 py-4 border-b border-gray-700/50"><h3 class="font-semibold text-white text-sm uppercase tracking-wide">Hoạt động gần đây</h3></div>
+                    <div class="p-6" id="system-logs"><div class="text-gray-500 italic text-sm" id="empty-logs-msg">Chưa có hoạt động nào...</div></div>
                 </div>
             </div>
 
             <!-- SURVEILLANCE TAB -->
             <div id="tab-surveillance" class="hidden fade-in">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Camera Control -->
                     <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
                         <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
                             <h3 class="font-semibold flex items-center gap-2"><i class="ph ph-webcam"></i> Camera</h3>
                             <div class="flex items-center gap-2">
                                 <span id="status-camera" class="text-xs text-gray-500">Đang tắt</span>
-                                <label for="toggle-camera" class="flex items-center cursor-pointer relative">
-                                    <input type="checkbox" id="toggle-camera" class="sr-only toggle-checkbox" onchange="handleToggleCamera(this)">
-                                    <div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div>
-                                </label>
+                                <label for="toggle-camera" class="flex items-center cursor-pointer relative"><input type="checkbox" id="toggle-camera" class="sr-only toggle-checkbox" onchange="handleToggleCamera(this)"><div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div><div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div></label>
                             </div>
                         </div>
                         <div class="aspect-video bg-black flex items-center justify-center relative group overflow-hidden">
-                            <div id="cam-placeholder" class="text-center text-gray-500 absolute inset-0 flex flex-col items-center justify-center">
-                                <i class="ph ph-video-camera-slash text-4xl mb-2"></i>
-                                <p>Không có tín hiệu</p>
-                            </div>
+                            <div id="cam-placeholder" class="text-center text-gray-500 absolute inset-0 flex flex-col items-center justify-center"><i class="ph ph-video-camera-slash text-4xl mb-2"></i><p>Không có tín hiệu</p></div>
                             <img id="cam-display" class="w-full h-full object-contain hidden" alt="Camera Feed">
                         </div>
                     </div>
-
-                    <!-- Screen Control -->
                     <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
                         <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
                             <h3 class="font-semibold flex items-center gap-2"><i class="ph ph-monitor"></i> Màn hình</h3>
                             <div class="flex items-center gap-2">
                                 <span id="status-screen" class="text-xs text-gray-500">Đang tắt</span>
-                                <label for="toggle-screen" class="flex items-center cursor-pointer relative">
-                                    <input type="checkbox" id="toggle-screen" class="sr-only toggle-checkbox" onchange="handleToggleScreen(this)">
-                                    <div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div>
-                                </label>
+                                <label for="toggle-screen" class="flex items-center cursor-pointer relative"><input type="checkbox" id="toggle-screen" class="sr-only toggle-checkbox" onchange="handleToggleScreen(this)"><div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div><div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div></label>
                             </div>
                         </div>
                         <div class="aspect-video bg-black flex items-center justify-center relative overflow-hidden">
-                            <div id="screen-placeholder" class="text-center text-gray-500 absolute inset-0 flex flex-col items-center justify-center">
-                                <i class="ph ph-monitor-x text-4xl mb-2"></i>
-                                <p>Chia sẻ màn hình đang tắt</p>
-                            </div>
+                            <div id="screen-placeholder" class="text-center text-gray-500 absolute inset-0 flex flex-col items-center justify-center"><i class="ph ph-monitor-x text-4xl mb-2"></i><p>Chia sẻ màn hình đang tắt</p></div>
                             <img id="screen-display" class="w-full h-full object-contain hidden" alt="Screen Feed">
                         </div>
                     </div>
@@ -290,17 +131,8 @@
                     <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                         <h3 class="font-semibold flex items-center gap-2"><i class="ph ph-keyboard"></i> Keylogger Logs</h3>
                          <div class="flex items-center gap-4">
-                            <button class="text-sm text-gray-400 hover:text-white flex items-center gap-1" onclick="handleClearKeylogs()">
-                                <i class="ph ph-trash"></i> Xóa Log
-                            </button>
-                            <div class="flex items-center gap-2">
-                                <span id="status-keylogger" class="text-xs text-gray-500">Đang tắt</span>
-                                <label for="toggle-keylogger" class="flex items-center cursor-pointer relative">
-                                    <input type="checkbox" id="toggle-keylogger" class="sr-only toggle-checkbox" onchange="handleToggleKeylogger(this)">
-                                    <div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div>
-                                </label>
-                            </div>
+                            <button class="text-sm text-gray-400 hover:text-white flex items-center gap-1" onclick="handleClearKeylogs()"><i class="ph ph-trash"></i> Xóa Log</button>
+                            <div class="flex items-center gap-2"><span id="status-keylogger" class="text-xs text-gray-500">Đang tắt</span><label for="toggle-keylogger" class="flex items-center cursor-pointer relative"><input type="checkbox" id="toggle-keylogger" class="sr-only toggle-checkbox" onchange="handleToggleKeylogger(this)"><div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div><div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div></label></div>
                         </div>
                     </div>
                     <div class="flex-1 p-4 bg-gray-900 font-mono text-sm text-gray-400 overflow-y-auto whitespace-pre-wrap leading-relaxed" id="keylogger-output"><span class="text-gray-500 italic">// Logs will appear here...</span></div>
@@ -319,17 +151,8 @@
                     </div>
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-left text-sm text-gray-400">
-                            <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs sticky top-0">
-                                <tr>
-                                    <th class="px-6 py-3">Name</th>
-                                    <th class="px-6 py-3">PID</th>
-                                    <th class="px-6 py-3">Memory</th>
-                                    <th class="px-6 py-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-700" id="process-list">
-                                <tr><td colspan="4" class="px-6 py-4 text-center italic">Click Refresh to load processes...</td></tr>
-                            </tbody>
+                            <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs sticky top-0"><tr><th class="px-6 py-3">Name</th><th class="px-6 py-3">PID</th><th class="px-6 py-3">Memory</th><th class="px-6 py-3 text-right">Action</th></tr></thead>
+                            <tbody class="divide-y divide-gray-700" id="process-list"><tr><td colspan="4" class="px-6 py-4 text-center italic">Click Refresh to load processes...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -340,18 +163,19 @@
                 <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
                      <div class="p-4 border-b border-gray-700 flex justify-between items-center">
                         <h3 class="font-semibold">Installed Applications</h3>
-                         <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm" onclick="handleListApps()">Scan Apps</button>
+                         <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm" onclick="handleListApps()">Scan Installed Apps</button>
                     </div>
                      <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-left text-sm text-gray-400">
                             <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs sticky top-0">
                                 <tr>
                                     <th class="px-6 py-3">Application Name</th>
+                                    <th class="px-6 py-3 text-center">Status</th>
                                     <th class="px-6 py-3 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-700" id="app-list">
-                                <tr><td colspan="2" class="px-6 py-4 text-center italic">Click Scan to load apps...</td></tr>
+                                <tr><td colspan="3" class="px-6 py-4 text-center italic">Click Scan to load installed apps...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -363,556 +187,207 @@
                  <div class="bg-black rounded-xl border border-gray-700 h-full flex flex-col shadow-2xl overflow-hidden">
                     <div class="bg-gray-800 px-4 py-2 flex items-center justify-between border-b border-gray-700">
                         <span class="text-gray-300 text-xs">Remote Terminal Session</span>
-                        <div class="flex gap-1.5">
-                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        </div>
+                        <div class="flex gap-1.5"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div></div>
                     </div>
-                    <!-- Interactive Terminal Container -->
-                    <div 
-                        class="flex-1 p-4 text-gray-300 overflow-y-auto cursor-text" 
-                        id="terminal-container" 
-                        tabindex="0"
-                    >
-                        <!-- Content generated by JS -->
-                    </div>
+                    <div class="flex-1 p-4 text-gray-300 overflow-y-auto cursor-text" id="terminal-container" tabindex="0"></div>
                  </div>
             </div>
-
         </div>
     </main>
 
-    <!-- Toast Notification -->
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 border border-indigo-500 text-white px-4 py-3 rounded shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
-        <i class="ph ph-info text-indigo-400 text-xl"></i>
-        <span id="toast-message">Notification</span>
+        <i class="ph ph-info text-indigo-400 text-xl"></i><span id="toast-message">Notification</span>
     </div>
 
     <script>
-        // === UTILS ===
-        function base64ToBlobFast(base64, type = 'image/bmp') {
-            try {
-                const binaryStr = atob(base64);
-                const len = binaryStr.length;
-                const bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                    bytes[i] = binaryStr.charCodeAt(i);
-                }
-                return new Blob([bytes], { type });
-            } catch (e) {
-                console.error("Base64 decode error:", e);
-                return null;
-            }
-        }
-        
-        function decodeBinary(input) {
-            try {
-                const binary = atob(input);
-                const len = binary.length;
-                const bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-                return new TextDecoder('utf-8').decode(bytes);
-            } catch (e) {
-                return input;
-            }
-        }
-
+        // UTILS
+        function base64ToBlobFast(base64, type = 'image/bmp') { try { return new Blob([Uint8Array.from(atob(base64), c => c.charCodeAt(0))], { type }); } catch (e) { console.error(e); return null; } }
+        function decodeBinary(input) { try { return new TextDecoder('utf-8').decode(Uint8Array.from(atob(input), c => c.charCodeAt(0))); } catch (e) { return input; } }
         function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const msg = document.getElementById('toast-message');
+            const toast = document.getElementById('toast'), msg = document.getElementById('toast-message');
             msg.innerText = message;
-            
-            if(type === 'error') toast.classList.add('border-red-500');
-            else toast.classList.remove('border-red-500');
-
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+            toast.className = `fixed bottom-5 right-5 bg-gray-800 border ${type === 'error' ? 'border-red-500' : 'border-indigo-500'} text-white px-4 py-3 rounded shadow-lg transition-all duration-300 z-50 flex items-center gap-3`;
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
-
         function logToSystem(msg) {
-            const logDiv = document.getElementById('system-logs');
-            const emptyMsg = document.getElementById('empty-logs-msg');
-            
-            if (emptyMsg) emptyMsg.remove();
-
-            const time = new Date().toLocaleTimeString('vi-VN', { hour12: false });
-            
+            const logDiv = document.getElementById('system-logs'), time = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+            if(document.getElementById('empty-logs-msg')) document.getElementById('empty-logs-msg').remove();
             const item = document.createElement('div');
             item.className = "flex items-center gap-3 mb-3 text-sm fade-in";
-            item.innerHTML = `
-                <div class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
-                <div class="text-gray-400">
-                    <span class="font-mono text-gray-500 mr-2">[${time}]</span>
-                    <span class="text-gray-300">${msg}</span>
-                </div>
-            `;
+            item.innerHTML = `<div class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div><div class="text-gray-400"><span class="font-mono text-gray-500 mr-2">[${time}]</span><span class="text-gray-300">${msg}</span></div>`;
             logDiv.prepend(item);
-            
-            if (logDiv.children.length > 20) {
-                logDiv.lastElementChild.remove();
-            }
+            if (logDiv.children.length > 20) logDiv.lastElementChild.remove();
         }
 
-        // === 2. STATE FLAGS ===
-        let isCameraActive = false;
-        let isScreenActive = false;
-        let currentFrameUrl, currentCamFrameUrl;
+        let isCameraActive = false, isScreenActive = false, currentFrameUrl, currentCamFrameUrl, currentTerminalCmd = "", currentPath = "C:\\";
+        function escapeHTML(str) { return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])); }
+        function buildCurrentLineHTML() { return `<div id="current-line" class="term-input-line"><span class="prompt">${escapeHTML(currentPath.trim())}&gt;</span><span class="whitespace-pre-wrap break-all">${escapeHTML(currentTerminalCmd)}</span><span class="cursor"></span></div>`; }
+        function scrollToTerminalBottom() { const c = document.getElementById("terminal-container"); c.scrollTop = c.scrollHeight; }
+        function updateCurrentLine() { const l = document.getElementById("current-line"); if(l) l.outerHTML = buildCurrentLineHTML(); scrollToTerminalBottom(); }
 
-        // === 3. TERMINAL LOGIC (FIXED) ===
-        let currentTerminalCmd = ""; 
-        let currentPath = "C:\\";
-        
-        function escapeHTML(str) {
-            return str.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
-        }
-
-        function buildCurrentLineHTML() {
-            const safePath = escapeHTML(currentPath.trim()); 
-            const safeCommand = escapeHTML(currentTerminalCmd);
-            
-            return `
-                <div id="current-line" class="term-input-line">
-                    <span class="prompt">${safePath}&gt;</span>
-                    <span class="whitespace-pre-wrap break-all">${safeCommand}</span>
-                    <span class="cursor"></span>
-                </div>
-            `;
-        }
-
-        function scrollToTerminalBottom() {
-            const container = document.getElementById("terminal-container");
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function updateCurrentLine() {
-            const currentLine = document.getElementById("current-line");
-            if (currentLine) {
-                currentLine.outerHTML = buildCurrentLineHTML();
-            }
-            scrollToTerminalBottom();
-        }
-
-        // === 4. WEBSOCKET LOGIC ===
         const DISCOVERY_SERVER_URL = "ws://localhost:5000"; 
-        let discoverySocket = null;
-        let targetSocket = null;
-        
+        let discoverySocket = null, targetSocket = null;
         function initDiscovery() {
             try {
                 discoverySocket = new WebSocket(DISCOVERY_SERVER_URL);
-                discoverySocket.onopen = () => {
-                    console.log("Connected to Discovery Server");
-                    setInterval(() => {
-                        if(discoverySocket.readyState === WebSocket.OPEN) {
-                            discoverySocket.send(JSON.stringify({type: "GET_LIST"}));
-                        }
-                    }, 2000);
-                };
-                discoverySocket.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.type === "DEVICE_LIST") {
-                            updateDeviceDropdown(data.devices);
-                        }
-                    } catch(e) { console.error(e); }
-                };
+                discoverySocket.onopen = () => setInterval(() => { if(discoverySocket.readyState === WebSocket.OPEN) discoverySocket.send(JSON.stringify({type: "GET_LIST"})); }, 2000);
+                discoverySocket.onmessage = (e) => { const d = JSON.parse(e.data); if(d.type === "DEVICE_LIST") updateDeviceDropdown(d.devices); };
             } catch (error) { console.error(error); }
         }
-
         function updateDeviceDropdown(devices) {
-            const select = document.getElementById('device-selector');
-            const currentVal = select.value;
-            select.innerHTML = '<option value="">-- Select a Target --</option>';
-            devices.forEach(dev => {
-                const option = document.createElement('option');
-                option.value = `ws://${dev.ip}:${dev.port}`;
-                option.text = `${dev.name} (${dev.ip})`;
-                select.appendChild(option);
-            });
-            select.value = currentVal;
+            const sel = document.getElementById('device-selector'), val = sel.value;
+            sel.innerHTML = '<option value="">-- Select a Target --</option>';
+            devices.forEach(dev => { const opt = document.createElement('option'); opt.value = `ws://${dev.ip}:${dev.port}`; opt.text = `${dev.name} (${dev.ip})`; sel.appendChild(opt); });
+            sel.value = val;
         }
-
-        document.getElementById('device-selector').addEventListener('change', function() {
-            const newTargetUrl = this.value;
-            disconnectCurrentTarget(); 
-            
-            if (newTargetUrl) {
-                connectToTarget(newTargetUrl);
-            }
-        });
-
-        function disconnectCurrentTarget() {
-            if (targetSocket) {
-                targetSocket.close();
-                targetSocket = null;
-            }
-            document.getElementById('ws-status-text').innerText = "Disconnected";
-            document.getElementById('ws-status-text').className = "text-red-500 font-bold";
-            document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
-            resetUIState();
-        }
-
-        function resetUIState() {
-            const camToggle = document.getElementById('toggle-camera');
-            if(camToggle.checked) camToggle.click(); 
-            isCameraActive = false;
-
-            const screenToggle = document.getElementById('toggle-screen');
-            if(screenToggle.checked) screenToggle.click();
-            isScreenActive = false;
-
-            const keyToggle = document.getElementById('toggle-keylogger');
-            if(keyToggle.checked) keyToggle.click();
-            handleClearKeylogs();
-
-            document.getElementById('system-logs').innerHTML = '<div class="text-gray-500 italic text-sm" id="empty-logs-msg">Chưa có hoạt động nào...</div>';
-            document.getElementById('terminal-container').innerHTML = '';
-        }
-
+        document.getElementById('device-selector').addEventListener('change', function() { if(this.value) { disconnectCurrentTarget(); connectToTarget(this.value); } });
+        function disconnectCurrentTarget() { if(targetSocket) targetSocket.close(); targetSocket = null; document.getElementById('ws-status-text').innerText = "Disconnected"; document.getElementById('ws-status-text').className = "text-red-500 font-bold"; document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; resetUIState(); }
+        function resetUIState() { isCameraActive = isScreenActive = false; document.getElementById('toggle-camera').checked = false; document.getElementById('toggle-screen').checked = false; document.getElementById('toggle-keylogger').checked = false; handleClearKeylogs(); document.getElementById('system-logs').innerHTML = '<div class="text-gray-500 italic text-sm" id="empty-logs-msg">Chưa có hoạt động nào...</div>'; document.getElementById('terminal-container').innerHTML = ''; }
         function connectToTarget(url) {
             try {
                 targetSocket = new WebSocket(url);
-                
-                targetSocket.onopen = () => {
-                    document.getElementById('ws-status-text').innerText = "Connected";
-                    document.getElementById('ws-status-text').className = "text-green-400 font-bold";
-                    document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-green-500";
-                    showToast("Đã kết nối tới Target!");
-                    logToSystem(`Kết nối thành công tới ${url}`);
-                    
-                    const termContainer = document.getElementById("terminal-container");
-                    termContainer.innerHTML = '<div class="term-line text-gray-400">--- Connected to Target ---</div>' + buildCurrentLineHTML();
-                };
-
-                targetSocket.onclose = () => {
-                    if (this === targetSocket) {
-                         document.getElementById('ws-status-text').innerText = "Disconnected";
-                         document.getElementById('ws-status-text').className = "text-red-500 font-bold";
-                         document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
-                         showToast("Mất kết nối Target!", "error");
-                    }
-                };
-
-                targetSocket.onmessage = handleTargetMessage; 
-            } catch (error) {
-                 showToast("Lỗi kết nối Target: " + error.message, "error");
-            }
+                targetSocket.onopen = () => { document.getElementById('ws-status-text').innerText = "Connected"; document.getElementById('ws-status-text').className = "text-green-400 font-bold"; document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-green-500"; showToast("Đã kết nối tới Target!"); logToSystem(`Kết nối thành công tới ${url}`); document.getElementById("terminal-container").innerHTML = '<div class="term-line text-gray-400">--- Connected to Target ---</div>' + buildCurrentLineHTML(); };
+                targetSocket.onclose = () => { if(this === targetSocket) { document.getElementById('ws-status-text').innerText = "Disconnected"; document.getElementById('ws-status-text').className = "text-red-500 font-bold"; document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; showToast("Mất kết nối Target!", "error"); }};
+                targetSocket.onmessage = handleTargetMessage;
+            } catch (error) { showToast("Lỗi kết nối Target: " + error.message, "error"); }
         }
-
-        function sendCommand(command) {
-            if(targetSocket && targetSocket.readyState === WebSocket.OPEN) {
-                targetSocket.send(JSON.stringify(command));
-            } else {
-                showToast("Chưa kết nối tới Target nào!", "error");
-            }
-        }
-
+        function sendCommand(cmd) { if(targetSocket && targetSocket.readyState === WebSocket.OPEN) targetSocket.send(JSON.stringify(cmd)); else showToast("Chưa kết nối tới Target nào!", "error"); }
+        
         function handleTargetMessage(event) {
-            let data;
+            let data; try { data = JSON.parse(event.data); } catch(e) { return; }
             try {
-                data = JSON.parse(event.data);
-            } catch(e) { return; }
-
-            try {
-                // --- SYSTEM STATS HANDLER ---
                 if (data.what === "SYS") {
                     const msg = data.message;
                     if (msg.trim().startsWith('{')) {
-                        try {
-                            const sysInfo = JSON.parse(msg);
-                            document.getElementById('cpu-value').innerText = parseFloat(sysInfo.cpu || 0).toFixed(1) + "%";
-                            document.getElementById('cpu-bar').style.width = parseFloat(sysInfo.cpu || 0).toFixed(1) + "%";
-                            document.getElementById('ram-value').innerText = parseFloat(sysInfo.ram_used_gb || 0).toFixed(1);
-                            document.getElementById('ram-total').innerText = `/ ${parseFloat(sysInfo.ram_total_gb || 0).toFixed(1)} GB`;
-                            document.getElementById('ram-bar').style.width = parseFloat(sysInfo.ram_percent || 0).toFixed(1) + "%";
-                            document.getElementById('uptime-value').innerText = sysInfo.uptime || "--";
-                            return;
-                        } catch(e) {}
-                    }
-                    if (msg.startsWith("CPU Usage:")) {
-                        const val = parseFloat(msg.replace("CPU Usage:", "").replace("%", "").trim()).toFixed(1);
-                        document.getElementById('cpu-value').innerText = val + "%";
-                        document.getElementById('cpu-bar').style.width = val + "%";
-                    } 
-                    return;
-                }
-
-                if (data.what === "PATH") {
-                    currentPath = data.message;
-                    updateCurrentLine(); 
-                    return;
-                }
-                
-                if (data.what === "Info") {
-                    if(activeTab === 'terminal' && data.message !== "") {
-                         const container = document.getElementById("terminal-container");
-                         const currentLine = document.getElementById("current-line");
-                         if (currentLine) currentLine.remove();
-                         const outputDiv = document.createElement('div');
-                         outputDiv.className = "term-line";
-                         outputDiv.textContent = data.message;
-                         container.appendChild(outputDiv);
-                         container.insertAdjacentHTML('beforeend', buildCurrentLineHTML());
-                         scrollToTerminalBottom();
-                    } else {
-                        logToSystem(data.message);
+                         const s = JSON.parse(msg);
+                         document.getElementById('cpu-value').innerText = parseFloat(s.cpu||0).toFixed(1)+"%"; document.getElementById('cpu-bar').style.width = parseFloat(s.cpu||0).toFixed(1)+"%";
+                         document.getElementById('ram-value').innerText = parseFloat(s.ram_used_gb||0).toFixed(1); document.getElementById('ram-total').innerText = `/ ${parseFloat(s.ram_total_gb||0).toFixed(1)} GB`; document.getElementById('ram-bar').style.width = parseFloat(s.ram_percent||0).toFixed(1)+"%";
+                         document.getElementById('uptime-value').innerText = s.uptime || "--";
                     }
                     return;
                 }
-
-                if (data.what === "Error") {
-                    showToast(`Lỗi: ${data.message}`, 'error');
-                    logToSystem(`Lỗi: ${data.message}`);
-                } 
-                else if (data.what === "Screenshot") {
-                    const blob = base64ToBlobFast(data.message, 'image/bmp');
-                    if (blob) {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `screenshot_${Date.now()}.bmp`;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        URL.revokeObjectURL(url);
-                        showToast("Đã tải xuống Screenshot");
-                    }
-                } 
-                else if (data.what === "Processes") {
-                    const decoded = decodeBinary(data.message);
-                    renderProcessList(decoded);
-                    showToast("Đã cập nhật danh sách Process");
-                } 
-                else if (data.what === "Applications") {
-                    const decoded = decodeBinary(data.message);
-                    renderAppList(decoded);
-                    showToast("Đã cập nhật danh sách Ứng dụng");
-                } 
-                else if (data.what === "Camera") {
-                    if (!isCameraActive) return; 
-                    const blob = base64ToBlobFast(data.message, 'image/bmp');
-                    if (blob) {
-                        if (currentFrameUrl) URL.revokeObjectURL(currentFrameUrl);
-                        currentFrameUrl = URL.createObjectURL(blob);
-                        document.getElementById('cam-display').src = currentFrameUrl;
-                        document.getElementById('cam-display').classList.remove('hidden');
-                        document.getElementById('cam-placeholder').classList.add('hidden');
-                    }
-                } 
-                else if (data.what === "Screen") { 
-                    if (!isScreenActive) return; 
-                    const blob = base64ToBlobFast(data.message, 'image/bmp');
-                    if (blob) {
-                        if (currentCamFrameUrl) URL.revokeObjectURL(currentCamFrameUrl);
-                        currentCamFrameUrl = URL.createObjectURL(blob);
-                        document.getElementById('screen-display').src = currentCamFrameUrl;
-                        document.getElementById('screen-display').classList.remove('hidden');
-                        document.getElementById('screen-placeholder').classList.add('hidden');
-                    }
+                if (data.what === "PATH") { currentPath = data.message; updateCurrentLine(); return; }
+                if (data.what === "Info") { if(activeTab === 'terminal' && data.message !== "") { const c = document.getElementById("terminal-container"); document.getElementById("current-line")?.remove(); const div = document.createElement('div'); div.className = "term-line"; div.textContent = data.message; c.appendChild(div); c.insertAdjacentHTML('beforeend', buildCurrentLineHTML()); scrollToTerminalBottom(); } else logToSystem(data.message); return; }
+                if (data.what === "Error") { showToast(`Lỗi: ${data.message}`, 'error'); logToSystem(`Lỗi: ${data.message}`); }
+                else if (data.what === "Screenshot") { const blob = base64ToBlobFast(data.message, 'image/bmp'); if(blob) { const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `screenshot_${Date.now()}.bmp`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast("Đã tải xuống Screenshot"); } }
+                else if (data.what === "Processes") { renderProcessList(decodeBinary(data.message)); showToast("Đã cập nhật danh sách Process"); }
+                else if (data.what === "Applications") { 
+                    try { const appList = JSON.parse(data.message); renderAppList(appList); showToast("Đã cập nhật danh sách Ứng dụng"); } 
+                    catch(e) { console.error("Lỗi JSON App", e); renderAppListText(decodeBinary(data.message)); }
                 }
-                else if (data.what === "Keylogger") {
-                    const logArea = document.getElementById('keylogger-output');
-                    const placeholder = logArea.querySelector('span');
-                    if (placeholder && placeholder.innerText.includes("// Logs will appear here")) {
-                        logArea.innerHTML = "";
-                    }
-                    logArea.textContent += data.message;
-                    logArea.scrollTop = logArea.scrollHeight;
-                }
-            } catch (err) {
-                console.error("Error handling target message", err);
-            }
-        };
+                else if (data.what === "Camera") { if(isCameraActive) { const blob = base64ToBlobFast(data.message, 'image/bmp'); if(blob) { if(currentFrameUrl) URL.revokeObjectURL(currentFrameUrl); currentFrameUrl = URL.createObjectURL(blob); document.getElementById('cam-display').src = currentFrameUrl; document.getElementById('cam-display').classList.remove('hidden'); document.getElementById('cam-placeholder').classList.add('hidden'); } } }
+                else if (data.what === "Screen") { if(isScreenActive) { const blob = base64ToBlobFast(data.message, 'image/bmp'); if(blob) { if(currentCamFrameUrl) URL.revokeObjectURL(currentCamFrameUrl); currentCamFrameUrl = URL.createObjectURL(blob); document.getElementById('screen-display').src = currentCamFrameUrl; document.getElementById('screen-display').classList.remove('hidden'); document.getElementById('screen-placeholder').classList.add('hidden'); } } }
+                else if (data.what === "Keylogger") { const l = document.getElementById('keylogger-output'); if(l.innerText.includes("// Logs")) l.innerHTML=""; l.textContent += data.message; l.scrollTop = l.scrollHeight; }
+            } catch (err) { console.error("Error handling target message", err); }
+        }
 
-        // === 5. TABLE HELPERS ===
         function renderProcessList(textData) {
-            const tbody = document.getElementById('process-list');
-            tbody.innerHTML = ""; 
-            const lines = textData.split('\n');
-            lines.forEach(line => {
+            const tbody = document.getElementById('process-list'); tbody.innerHTML = "";
+            textData.split('\n').forEach(line => {
                 if(!line.trim()) return;
-                let parts = line.trim().split(/\s+/);
-                let pid = 'N/A', mem = 'N/A', name = line;
-                const pidMatch = line.match(/(\d+)/);
-                if (pidMatch) pid = pidMatch[0];
-                const memMatch = line.match(/([\d,]+\s*K)/i);
-                if (memMatch) mem = memMatch[0];
-                if(pid !== 'N/A') {
-                    name = line.substring(0, line.indexOf(pid)).trim();
-                    if (!name) name = parts[0];
-                }
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-800/50 transition border-b border-gray-700";
-                tr.innerHTML = `<td class="px-6 py-3 font-medium text-white">${name}</td><td class="px-6 py-3 font-mono text-xs text-indigo-400">${pid}</td><td class="px-6 py-3 text-gray-400">${mem}</td><td class="px-6 py-3 text-right"><button onclick="handleStopProcess('${pid}')" class="text-red-400 hover:text-red-300 text-xs border border-red-500/30 hover:bg-red-500/10 px-2 py-1 rounded transition">Kill</button></td>`;
-                tbody.appendChild(tr);
+                let parts = line.trim().split(/\s+/), pid = 'N/A', mem = 'N/A', name = line;
+                const pidMatch = line.match(/(\d+)/); if (pidMatch) pid = pidMatch[0];
+                const memMatch = line.match(/([\d,]+\s*K)/i); if (memMatch) mem = memMatch[0];
+                if(pid !== 'N/A') { name = line.substring(0, line.indexOf(pid)).trim(); if (!name) name = parts[0]; }
+                tbody.innerHTML += `<tr class="hover:bg-gray-800/50 transition border-b border-gray-700"><td class="px-6 py-3 font-medium text-white">${name}</td><td class="px-6 py-3 font-mono text-xs text-indigo-400">${pid}</td><td class="px-6 py-3 text-gray-400">${mem}</td><td class="px-6 py-3 text-right"><button onclick="handleStopProcess('${pid}')" class="text-red-400 hover:text-red-300 text-xs border border-red-500/30 hover:bg-red-500/10 px-2 py-1 rounded transition">Kill</button></td></tr>`;
             });
         }
 
-        function renderAppList(textData) {
+        function renderAppList(appList) {
             const tbody = document.getElementById('app-list');
-            tbody.innerHTML = ""; 
-            const lines = textData.split('\n');
-            lines.forEach(line => {
+            tbody.innerHTML = "";
+            appList.forEach(app => {
+                const isRunning = app.is_running;
+                const safeName = (app.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+                const safePath = (app.exec_path || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+                
+                let exeName = "";
+                if (app.exec_path) {
+                    const parts = app.exec_path.split('\\');
+                    exeName = parts[parts.length - 1]; 
+                }
+                const stopTarget = exeName ? exeName : safeName;
+
+                const statusHtml = isRunning 
+                    ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20"><div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>Running</span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">Stopped</span>`;
+                
+                const actionBtn = isRunning
+                    ? `<button onclick="handleStopApp('${stopTarget}')" class="text-red-400 hover:text-red-300 border border-red-500/30 hover:bg-red-500/10 px-3 py-1 rounded text-xs transition flex items-center gap-1 ml-auto"><i class="ph ph-stop"></i> Stop</button>`
+                    : `<button onclick="handleStartApp('${safeName}', '${safePath}')" class="text-green-400 hover:text-green-300 border border-green-500/30 hover:bg-green-500/10 px-3 py-1 rounded text-xs transition flex items-center gap-1 ml-auto"><i class="ph ph-play"></i> Start</button>`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/50 transition border-b border-gray-700">
+                        <td class="px-6 py-3 font-medium text-white">
+                            <div class="flex items-center gap-2">
+                                <i class="ph ph-cube text-indigo-500"></i> 
+                                <div class="flex flex-col">
+                                    <span>${app.name}</span>
+                                    ${app.exec_path ? `<span class="text-[10px] text-gray-500 font-mono">${app.exec_path}</span>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3 text-center">${statusHtml}</td>
+                        <td class="px-6 py-3 text-right">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+        function renderAppListText(textData) {
+            const tbody = document.getElementById('app-list'); tbody.innerHTML = "";
+            textData.split('\n').forEach(line => {
                 if(!line.trim()) return;
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-800/50 transition border-b border-gray-700";
-                tr.innerHTML = `<td class="px-6 py-3 font-medium text-white flex items-center gap-2"><i class="ph ph-cube text-indigo-500"></i> ${line}</td><td class="px-6 py-3 text-right"><button class="text-green-400 hover:text-green-300" title="Start"><i class="ph ph-play"></i></button></td>`;
-                tbody.appendChild(tr);
+                tbody.innerHTML += `<tr class="hover:bg-gray-800/50 transition border-b border-gray-700"><td class="px-6 py-3 font-medium text-white flex items-center gap-2"><i class="ph ph-cube text-indigo-500"></i> ${line}</td><td class="px-6 py-3 text-center text-gray-500">-</td><td class="px-6 py-3 text-right"><button class="text-green-400 hover:text-green-300"><i class="ph ph-play"></i></button></td></tr>`;
             });
         }
 
-        // === 6. INPUT HANDLERS ===
         const terminalContainer = document.getElementById("terminal-container");
         terminalContainer.addEventListener("click", () => terminalContainer.focus());
-        terminalContainer.addEventListener("keydown", (event) => {
+        terminalContainer.addEventListener("keydown", (e) => {
             if (document.activeElement !== terminalContainer) return;
-            const key = event.key;
-            
-            if (key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
-                event.preventDefault();
-                currentTerminalCmd += key;
-                updateCurrentLine();
-                return;
-            }
-            
-            if (key === "Enter") {
-                event.preventDefault();
-                const currentLine = document.getElementById("current-line");
-                if (currentLine) currentLine.remove();
-                
-                const completedLine = document.createElement('div');
-                completedLine.className = "term-line";
-                completedLine.textContent = `${currentPath.trim()}> ${currentTerminalCmd}`;
-                terminalContainer.appendChild(completedLine);
-                
-                if (targetSocket && targetSocket.readyState === WebSocket.OPEN) {
-                    targetSocket.send(JSON.stringify({ terminal: currentTerminalCmd, path: currentPath }));
-                }
-                currentTerminalCmd = "";
-                terminalContainer.insertAdjacentHTML('beforeend', buildCurrentLineHTML());
-                scrollToTerminalBottom();
-            } else if (key === "Backspace") {
-                event.preventDefault();
-                if (currentTerminalCmd.length > 0) {
-                    currentTerminalCmd = currentTerminalCmd.substring(0, currentTerminalCmd.length - 1);
-                    updateCurrentLine(); 
-                }
-            }
+            const key = e.key;
+            if (key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); currentTerminalCmd += key; updateCurrentLine(); return; }
+            if (key === "Enter") { e.preventDefault(); document.getElementById("current-line")?.remove(); const div = document.createElement('div'); div.className = "term-line"; div.textContent = `${currentPath.trim()}> ${currentTerminalCmd}`; terminalContainer.appendChild(div); if (targetSocket && targetSocket.readyState === WebSocket.OPEN) targetSocket.send(JSON.stringify({ terminal: currentTerminalCmd, path: currentPath })); currentTerminalCmd = ""; terminalContainer.insertAdjacentHTML('beforeend', buildCurrentLineHTML()); scrollToTerminalBottom(); }
+            else if (key === "Backspace") { e.preventDefault(); if (currentTerminalCmd.length > 0) { currentTerminalCmd = currentTerminalCmd.slice(0, -1); updateCurrentLine(); } }
         });
 
-        // === 7. UI HANDLERS ===
         let activeTab = 'dashboard';
         function switchTab(tabId) {
-            document.getElementById(`tab-${activeTab}`).classList.add('hidden');
-            document.getElementById(`nav-${activeTab}`).classList.remove('bg-gray-700', 'text-white');
-            document.getElementById(`nav-${activeTab}`).classList.add('text-gray-300');
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            document.getElementById(`nav-${tabId}`).classList.add('bg-gray-700', 'text-white');
-            document.getElementById(`nav-${tabId}`).classList.remove('text-gray-300');
+            document.getElementById(`tab-${activeTab}`).classList.add('hidden'); document.getElementById(`nav-${activeTab}`).classList.remove('bg-gray-700', 'text-white'); document.getElementById(`nav-${activeTab}`).classList.add('text-gray-300');
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden'); document.getElementById(`nav-${tabId}`).classList.add('bg-gray-700', 'text-white'); document.getElementById(`nav-${tabId}`).classList.remove('text-gray-300');
             activeTab = tabId;
-            
-            const titles = {
-                'dashboard': 'Tổng quan hệ thống',
-                'surveillance': 'Giám sát Camera / Màn hình',
-                'keylogger': 'Nhật ký bàn phím (Keylogger)',
-                'processes': 'Quản lý Tiến trình (Processes)',
-                'applications': 'Quản lý Ứng dụng',
-                'terminal': 'Terminal'
-            };
-            document.getElementById('page-title').innerText = titles[tabId] || 'Remote Admin Dashboard';
-
+            const t = { 'dashboard': 'Tổng quan hệ thống', 'surveillance': 'Giám sát Camera / Màn hình', 'keylogger': 'Nhật ký bàn phím (Keylogger)', 'processes': 'Quản lý Tiến trình (Processes)', 'applications': 'Quản lý Ứng dụng', 'terminal': 'Terminal' };
+            document.getElementById('page-title').innerText = t[tabId] || 'Remote Admin Dashboard';
             if(tabId === 'terminal') setTimeout(() => document.getElementById("terminal-container").focus(), 100);
         }
 
         function handleScreenshot() { sendCommand({ command: "screenshot" }); }
         function handleShutdown() { if (confirm("Tắt máy?")) sendCommand({ command: "shutdown" }); }
         function handleRestart() { if (confirm("Khởi động lại?")) sendCommand({ command: "restart" }); }
-
-        function handleToggleCamera(checkbox) {
-            const isActive = checkbox.checked;
-            updateStatus('camera', isActive);
-            if (isActive) {
-                isCameraActive = true;
-                sendCommand({ command: "start_camera" });
-                document.getElementById('cam-placeholder').classList.add('hidden');
-            } else {
-                isCameraActive = false; 
-                sendCommand({ command: "stop_camera" });
-                const camImg = document.getElementById('cam-display');
-                camImg.classList.add('hidden');
-                camImg.src = ""; 
-                if(currentFrameUrl) URL.revokeObjectURL(currentFrameUrl); 
-                document.getElementById('cam-placeholder').classList.remove('hidden');
-            }
-        }
-
-        function handleToggleScreen(checkbox) {
-            const isActive = checkbox.checked;
-            updateStatus('screen', isActive);
-            if (isActive) {
-                isScreenActive = true;
-                sendCommand({ command: "start_screen" });
-                document.getElementById('screen-placeholder').classList.add('hidden');
-            } else {
-                isScreenActive = false; 
-                sendCommand({ command: "stop_screen" });
-                const scrImg = document.getElementById('screen-display');
-                scrImg.classList.add('hidden');
-                scrImg.src = ""; 
-                if(currentCamFrameUrl) URL.revokeObjectURL(currentCamFrameUrl); 
-                document.getElementById('screen-placeholder').classList.remove('hidden');
-            }
-        }
-
-        function handleToggleKeylogger(checkbox) {
-            const isActive = checkbox.checked;
-            updateStatus('keylogger', isActive);
-            sendCommand(isActive ? { command: "start_keylogger" } : { command: "stop_keylogger" });
-
-            const logArea = document.getElementById('keylogger-output');
-            if (isActive) {
-                logArea.classList.remove('text-gray-400');
-                logArea.classList.add('text-green-400');
-            } else {
-                logArea.classList.remove('text-green-400');
-                logArea.classList.add('text-gray-400');
-            }
-        }
-
-        function handleClearKeylogs() { 
-            const logArea = document.getElementById('keylogger-output');
-            const isGreen = document.getElementById('toggle-keylogger').checked;
-            const colorClass = isGreen ? 'text-green-400' : 'text-gray-400';
-            
-            logArea.className = `flex-1 p-4 bg-gray-900 font-mono text-sm overflow-y-auto whitespace-pre-wrap leading-relaxed ${colorClass}`;
-            logArea.innerHTML = '<span class="text-gray-500 italic">// Logs will appear here...</span>'; 
-        }
-
+        function handleToggleCamera(cb) { isCameraActive = cb.checked; sendCommand({ command: cb.checked ? "start_camera" : "stop_camera" }); updateStatus('camera', cb.checked); if(!cb.checked) { document.getElementById('cam-display').classList.add('hidden'); document.getElementById('cam-placeholder').classList.remove('hidden'); } }
+        function handleToggleScreen(cb) { isScreenActive = cb.checked; sendCommand({ command: cb.checked ? "start_screen" : "stop_screen" }); updateStatus('screen', cb.checked); if(!cb.checked) { document.getElementById('screen-display').classList.add('hidden'); document.getElementById('screen-placeholder').classList.remove('hidden'); } }
+        function handleToggleKeylogger(cb) { sendCommand({ command: cb.checked ? "start_keylogger" : "stop_keylogger" }); updateStatus('keylogger', cb.checked); const l = document.getElementById('keylogger-output'); l.classList.toggle('text-green-400', cb.checked); l.classList.toggle('text-gray-400', !cb.checked); }
+        function handleClearKeylogs() { const l = document.getElementById('keylogger-output'), isG = document.getElementById('toggle-keylogger').checked; l.className = `flex-1 p-4 bg-gray-900 font-mono text-sm overflow-y-auto whitespace-pre-wrap leading-relaxed ${isG?'text-green-400':'text-gray-400'}`; l.innerHTML = '<span class="text-gray-500 italic">// Logs will appear here...</span>'; }
         function handleListProcesses() { sendCommand({ command: "processes" }); }
         function handleStopProcess(pid) { if(confirm(`Kill PID ${pid}?`)) sendCommand({ command: "stop_process", pid: parseInt(pid) }); }
-        function handleStartProcess() { 
-            const name = prompt("Nhập tên process:"); 
-            if(name) sendCommand({ command: "start_application", name: name }); 
-        }
+        function handleStartProcess() { const name = prompt("Nhập tên process:"); if(name) sendCommand({ command: "start_application", name: name }); }
         function handleListApps() { sendCommand({ command: "applications" }); }
-
-        function updateStatus(id, isActive) {
-            const el = document.getElementById(`status-${id}`);
-            if (isActive) {
-                el.innerText = "Đang bật";
-                el.className = "text-xs text-green-400 font-bold";
-            } else {
-                el.innerText = "Đang tắt";
-                el.className = "text-xs text-gray-500";
+        
+        function handleStartApp(appName, appPath) {
+             const target = (appPath && appPath.trim() !== "") ? appPath : appName;
+             if(confirm(`Khởi chạy ứng dụng: ${appName}?`)) {
+                 sendCommand({ command: "start_application", name: target });
+             }
+        }
+        
+        function handleStopApp(exeName) {
+            if(confirm(`Dừng toàn bộ ứng dụng: ${exeName}?`)) {
+                sendCommand({ command: "stop_application", exe_name: exeName });
             }
         }
 
-        // Start Discovery
+        function updateStatus(id, isActive) { const el = document.getElementById(`status-${id}`); el.innerText = isActive ? "Đang bật" : "Đang tắt"; el.className = isActive ? "text-xs text-green-400 font-bold" : "text-xs text-gray-500"; }
         initDiscovery();
     </script>
 </body>

