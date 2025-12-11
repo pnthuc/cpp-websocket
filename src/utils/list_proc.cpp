@@ -1,104 +1,87 @@
 #include "list_proc.h"
 #include "encode.h" 
+#include <psapi.h>
+#include <tlhelp32.h>
+#include <sstream>
+#include <iomanip>
+
+#pragma comment(lib, "psapi.lib")
+
+std::string get_memory_usage(DWORD pid) {
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (NULL == hProcess) return "0 MB";
+
+    PROCESS_MEMORY_COUNTERS pmc;
+    std::string result = "0 MB";
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
+        double memMB = pmc.WorkingSetSize / (1024.0 * 1024.0);
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(1) << memMB << " MB";
+        result = ss.str();
+    }
+
+    CloseHandle(hProcess);
+    return result;
+}
 
 void list_processes(websocket::stream<tcp::socket>& ws) {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
         sendMsg(ws, "text", "Error", "Failed to create snapshot");
-        file_logger->error("Failed to create process snapshot.");
         return;
     }
 
     PROCESSENTRY32W pe32;
     pe32.dwSize = sizeof(PROCESSENTRY32W);
 
-    std::vector<std::pair<DWORD, std::string>> processes;
+    json procArray = json::array(); 
 
     if (Process32FirstW(hSnapshot, &pe32)) {
         do {
+            if (pe32.th32ProcessID == 0) continue; 
+
             std::string exeName = WinEncoding::ToUtf8(pe32.szExeFile);
-            processes.emplace_back(pe32.th32ProcessID, exeName);
+            std::string ram = get_memory_usage(pe32.th32ProcessID);
+
+            json item;
+            item["name"] = exeName;
+            item["pid"] = pe32.th32ProcessID;
+            item["memory"] = ram;
+            
+            procArray.push_back(item);
+
         } while (Process32NextW(hSnapshot, &pe32));
     }
 
     CloseHandle(hSnapshot);
 
-    std::string binaryData;
-    constexpr size_t NAME_WIDTH = 40;
-    constexpr size_t PID_WIDTH  = 8;
-
-    if (!processes.empty()) {
-        // binaryData += "--- Process List ---\n";
-        // binaryData += "Name";
-        // if (NAME_WIDTH > 4) binaryData.append(NAME_WIDTH - 4, ' ');
-        // binaryData += "PID\n";
-        // binaryData += std::string(NAME_WIDTH + PID_WIDTH, '-') + "\n";
-
-        for (const auto& app : processes) {
-            std::string name = app.second;
-            std::string pid  = std::to_string(app.first);
-            if (name.size() > NAME_WIDTH) name = name.substr(0, NAME_WIDTH);
-
-            std::string name_padded = name;
-            if (name_padded.size() < NAME_WIDTH)
-                name_padded.append(NAME_WIDTH - name_padded.size(), ' ');
-
-            std::string pid_padded;
-            if (pid.size() < PID_WIDTH)
-                pid_padded.append(PID_WIDTH - pid.size(), ' ');
-            pid_padded += pid;
-
-            binaryData += name_padded + pid_padded + "\n";
-        }
-        sendMsg(ws, "binary", "Processes", std::vector<BYTE>(binaryData.begin(), binaryData.end()));
-        file_logger->info("Listed processes.");
-    } else {
-        sendMsg(ws, "text", "Info", "No processes found.");
-        file_logger->info("No processes found.");
-    }
+    sendMsg(ws, "json", "Processes", procArray.dump());
+    
+    if (file_logger) file_logger->info("Listed {} processes.", procArray.size());
 }
 
 void handle_kill_process(const nlohmann::json& data, websocket::stream<tcp::socket>& ws) {
     try {
-        if (!data.contains("pid")) {
-            sendMsg(ws, "text", "Error", "PID not provided.");
-            return;
-        }
-
-        uint32_t pid = 0;
-        bool pid_ok = false;
-        if (data["pid"].is_number_integer()) {
-            pid = data["pid"].get<uint32_t>();
-            pid_ok = true;
-        } else if (data["pid"].is_string()) {
-            try {
-                pid = static_cast<uint32_t>(std::stoul(data["pid"].get<std::string>()));
-                pid_ok = true;
-            } catch (...) {}
-        }
-
-        if (!pid_ok) {
-            sendMsg(ws, "text", "Error", "Invalid PID format.");
-            return;
-        }
-
-        HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
+        if (!data.contains("pid")) return;
+        
+        DWORD pid = 0;
+        if (data["pid"].is_number()) pid = data["pid"].get<DWORD>();
+        else if (data["pid"].is_string()) pid = std::stoul(data["pid"].get<std::string>());
+        
+        HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
         if (hProcess == NULL) {
-            sendMsg(ws, "text", "Error", "Failed to open process PID " + std::to_string(pid));
-            file_logger->error("Failed to open process PID {} for termination.", pid);
+            sendMsg(ws, "text", "Error", "Access Denied or PID not found: " + std::to_string(pid));
             return;
-        } else {
-            if (TerminateProcess(hProcess, 0)) {
-                sendMsg(ws, "text", "Info", "Terminated PID " + std::to_string(pid));
-                file_logger->info("Killed process PID {}", pid);
-            } else {
-                sendMsg(ws, "text", "Error", "Failed to terminate PID " + std::to_string(pid));
-                file_logger->error("Failed to terminate process PID {}", pid);
-            }
-            CloseHandle(hProcess);
         }
+        
+        if (TerminateProcess(hProcess, 0)) {
+            sendMsg(ws, "text", "Info", "Killed process PID " + std::to_string(pid));
+        } else {
+            sendMsg(ws, "text", "Error", "Failed to kill PID " + std::to_string(pid));
+        }
+        CloseHandle(hProcess);
     } catch (const std::exception& e) {
-        if(file_logger) file_logger->error("Error killing process: {}", e.what());
         sendMsg(ws, "text", "Error", std::string("Exception: ") + e.what());
     }
 }

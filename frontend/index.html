@@ -3,392 +3,660 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote Admin Dashboard</title>
+    <title>Modern Remote Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
-        .toggle-checkbox:checked ~ .dot { transform: translateX(100%); }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #terminal-container { outline: none; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; }
+        /* --- OPTIMIZED CORE STYLES --- */
+        html { background-color: #0f172a; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #0f172a radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%) fixed;
+        }
+        
+        /* Reset & Utilities */
+        *, *:focus { outline: none !important; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* Glassmorphism Simplified */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Interactive Card */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.3); 
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+
+        /* --- RESTORED TERMINAL STYLES --- */
+        #term-out { outline: none; font-size: 13px; line-height: 1.6; }
         .term-line { min-height: 1.5em; white-space: pre-wrap; word-break: break-all; }
         .term-input-line { display: flex; align-items: baseline; white-space: pre-wrap; word-break: break-all; }
-        .cursor { display: inline-block; width: 8px; height: 1em; background-color: #e5e7eb; animation: blink 1s step-end infinite; vertical-align: text-bottom; margin-left: 1px; }
+        
+        /* Cursor Styling */
+        .cursor { display: inline-block; color: #e2e8f0; animation: blink 1s step-end infinite; font-weight: 300; margin-left: 1px; vertical-align: text-bottom; }
+        .cursor::after { content: '|'; }
         @keyframes blink { 50% { opacity: 0; } }
-        .prompt { color: #4ade80; font-weight: bold; margin-right: 8px; flex-shrink: 0; }
+        .prompt { color: #10b981; font-weight: 600; margin-right: 8px; flex-shrink: 0; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+
+        /* --- REDESIGNED TOGGLE SWITCH --- */
+        .toggle-checkbox:checked + .toggle-label { 
+            background-color: #6366f1; /* Indigo 500 */
+        }
+        .toggle-checkbox:checked + .toggle-label + .dot { 
+            transform: translateX(100%); 
+            background-color: #ffffff;
+        }
+        /* Căn chỉnh lại dot cho đẹp */
+        .dot { 
+            transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Animation Optimized */
+        .fade-in { animation: fadeIn 0.25s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Premium Button */
+        .btn-premium { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .btn-premium:hover { filter: brightness(1.1); }
     </style>
     <script>
-        tailwind.config = { theme: { extend: { colors: { gray: { 900: '#111827', 800: '#1f2937', 700: '#374151' } } } } }
+        tailwind.config = { theme: { extend: { colors: { slate: { 850: '#1e293b' } }, fontFamily: { mono: ['JetBrains Mono', 'monospace'] } } } }
     </script>
 </head>
-<body class="bg-gray-900 text-white h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
+<body class="text-slate-200 h-screen flex overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
 
-    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-        <div class="p-6 flex items-center gap-3 border-b border-gray-700">
-            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><i class="ph ph-cpu text-xl"></i></div>
-            <h1 class="text-lg font-bold tracking-wide">CPPWeb<span class="text-indigo-400">Soc</span></h1>
+    <!-- SIDEBAR -->
+    <aside class="w-72 glass-panel border-r-0 border-r border-white/5 flex flex-col z-20 m-3 rounded-2xl mb-3 overflow-hidden shrink-0">
+        <div class="p-6 flex items-center gap-3 border-b border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white"><i class="ph-bold ph-cpu text-xl"></i></div>
+            <div><h1 class="text-lg font-bold text-white leading-tight">CPP<span class="text-indigo-400">WebSoc</span></h1><p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Admin Console v2.0</p></div>
         </div>
-        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-gray-700 text-white transition-colors"><i class="ph ph-squares-four text-lg"></i> Tổng quan</button>
-            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Giám sát</div>
-            <button onclick="switchTab('surveillance')" id="nav-surveillance" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-eye text-lg"></i> Camera / Màn hình</button>
-            <button onclick="switchTab('keylogger')" id="nav-keylogger" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-keyboard text-lg"></i> Keylogger</button>
-            <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Hệ thống</div>
-            <button onclick="switchTab('processes')" id="nav-processes" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-chart-bar text-lg"></i> Processes</button>
-            <button onclick="switchTab('applications')" id="nav-applications" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-app-window text-lg"></i> Applications</button>
-            <button onclick="switchTab('terminal')" id="nav-terminal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"><i class="ph ph-terminal-window text-lg"></i> Terminal</button>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1" id="sidebar-nav">
+            <!-- Nav Items -->
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-1">Dashboards</div>
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active-nav w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"><i class="ph-duotone ph-squares-four text-lg"></i> <span>Tổng quan</span></button>
+            
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2 mt-6">Monitoring</div>
+            <button onclick="switchTab('screen')" id="nav-screen" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-monitor text-lg group-hover:text-emerald-400 transition-colors"></i> <span>Màn hình Live</span></button>
+            <button onclick="switchTab('camera')" id="nav-camera" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-webcam text-lg group-hover:text-rose-400 transition-colors"></i> <span>Camera Live</span></button>
+            <button onclick="switchTab('keylogger')" id="nav-keylogger" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-keyboard text-lg group-hover:text-amber-400 transition-colors"></i> <span>Keylogger</span></button>
+            
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2 mt-6">System Control</div>
+            <button onclick="switchTab('file-explorer')" id="nav-file-explorer" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-folder-open text-lg group-hover:text-yellow-400 transition-colors"></i> <span>File Explorer</span></button>
+            <button onclick="switchTab('processes')" id="nav-processes" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-chart-bar text-lg group-hover:text-cyan-400 transition-colors"></i> <span>Processes</span></button>
+            <button onclick="switchTab('applications')" id="nav-applications" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-app-window text-lg group-hover:text-violet-400 transition-colors"></i> <span>Applications</span></button>
+            <button onclick="switchTab('terminal')" id="nav-terminal" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-terminal-window text-lg group-hover:text-orange-400 transition-colors"></i> <span>Terminal</span></button>
         </nav>
-        <div class="p-4 border-t border-gray-700">
-            <div class="mb-3">
-                <label class="text-xs text-gray-400 uppercase font-semibold block mb-1">Chọn thiết bị</label>
-                <select id="device-selector" class="w-full bg-gray-900 border border-gray-600 text-white text-xs rounded p-2 outline-none focus:border-indigo-500"><option value="">-- Scanning --</option></select>
+        
+        <div class="p-4 bg-black/20 backdrop-blur-sm border-t border-white/5">
+            <div class="relative mb-3">
+                <select id="device-selector" class="w-full bg-slate-800/50 border border-white/10 text-white text-xs rounded-lg py-2 pl-3 pr-8 appearance-none cursor-pointer hover:bg-slate-800 transition"><option value="">-- Scanning --</option></select>
+                <i class="ph-bold ph-caret-down absolute right-3 top-2.5 text-slate-500 pointer-events-none text-xs"></i>
             </div>
-            <div class="flex items-center gap-3">
-                <div id="ws-status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                <span class="text-sm text-gray-400">Status: <span id="ws-status-text" class="text-white font-medium">Disconnected</span></span>
+            <div class="flex items-center gap-3 bg-white/5 p-2.5 rounded-lg border border-white/5">
+                <div class="relative flex h-2.5 w-2.5"><span id="ws-ping-dot" class="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 hidden"></span><span id="ws-status-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-600"></span></div>
+                <div class="flex flex-col"><span class="text-[10px] text-slate-400 font-semibold uppercase leading-none mb-0.5">Status</span><span id="ws-status-text" class="text-xs text-slate-500 font-bold leading-none">Offline</span></div>
             </div>
         </div>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header class="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-8 shadow-sm z-10">
-            <h2 class="text-xl font-semibold text-white" id="page-title">Tổng quan hệ thống</h2>
-            <div class="flex items-center gap-4">
-                <button onclick="handleScreenshot()" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white px-4 py-2 rounded text-sm transition shadow-sm"><i class="ph ph-camera"></i> Chụp màn hình</button>
-                <button onclick="handleRestart()" class="text-gray-400 hover:text-yellow-500 p-2 rounded-full hover:bg-gray-800 transition" title="Khởi động lại"><i class="ph ph-arrow-counter-clockwise text-xl"></i></button>
-                <button onclick="handleShutdown()" class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-gray-800 transition" title="Tắt máy"><i class="ph ph-power text-xl"></i></button>
+        <header class="h-20 flex items-center justify-between px-8 z-10 shrink-0">
+            <div><h2 class="text-2xl font-bold text-white tracking-tight" id="page-title">Tổng quan hệ thống</h2></div>
+            <div class="flex items-center gap-3">
+                <button onclick="openRemoteControl()" class="btn-premium flex items-center gap-2.5 text-white px-5 py-2.5 rounded-xl text-sm transition-all font-bold active:scale-95"><i class="ph-duotone ph-desktop text-lg"></i> <span>Điều khiển</span></button>
+                <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+                <button onclick="sendCommand({command: 'screenshot'})" class="p-2.5 rounded-xl bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700/50 border border-white/5 transition active:scale-95"><i class="ph-bold ph-camera text-lg"></i></button>
+                <button onclick="sendSysCommand('restart')" class="p-2.5 rounded-xl bg-slate-800/50 text-slate-300 hover:text-yellow-400 hover:bg-yellow-400/10 border border-white/5 transition active:scale-95"><i class="ph-bold ph-arrow-counter-clockwise text-lg"></i></button>
+                <button onclick="sendSysCommand('shutdown')" class="p-2.5 rounded-xl bg-slate-800/50 text-slate-300 hover:text-red-500 hover:bg-red-500/10 border border-white/5 transition active:scale-95"><i class="ph-bold ph-power text-lg"></i></button>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 bg-gray-900" id="content-area">
-            <!-- DASHBOARD TAB -->
-            <div id="tab-dashboard" class="space-y-6 fade-in">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700/50 shadow-lg relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4"><div><p class="text-gray-400 text-sm font-medium">CPU Usage</p><h3 class="text-3xl font-bold text-white mt-1" id="cpu-value">0%</h3></div><div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><i class="ph ph-cpu text-2xl"></i></div></div>
-                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden"><div id="cpu-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div></div>
+        <div class="flex-1 overflow-y-auto px-8 pb-8 flex flex-col w-full bg-[#0f172a]" id="content-area">
+            <!-- DASHBOARD -->
+            <div id="tab-dashboard" class="space-y-6 fade-in w-full h-full flex flex-col">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
+                    <!-- CPU Card -->
+                    <div class="glass-card rounded-2xl p-6 min-h-[160px] flex flex-col justify-between group">
+                        <div class="flex justify-between items-start"><div><p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">CPU Load</p><h3 class="text-4xl font-bold text-white" id="cpu-value">0%</h3></div><div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400"><i class="ph-fill ph-cpu text-2xl"></i></div></div>
+                        <div class="w-full bg-slate-700/30 h-1.5 rounded-full overflow-hidden"><div id="cpu-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
                     </div>
-                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700/50 shadow-lg relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4"><div><p class="text-gray-400 text-sm font-medium">RAM Usage</p><h3 class="text-3xl font-bold text-white mt-1"><span id="ram-value">0</span><span class="text-lg text-gray-500 font-normal" id="ram-total">/ 0 GB</span></h3></div><div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg"><i class="ph ph-memory text-2xl"></i></div></div>
-                        <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden"><div id="ram-bar" class="bg-purple-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div></div>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700/50 shadow-lg relative overflow-hidden">
-                        <div class="flex justify-between items-start mb-4"><div><p class="text-gray-400 text-sm font-medium">System Uptime</p><h3 class="text-3xl font-bold text-white mt-1" id="uptime-value">--</h3></div><div class="p-2 bg-green-500/10 text-green-400 rounded-lg"><i class="ph ph-clock text-2xl"></i></div></div>
-                        <p class="text-xs text-gray-500">Live monitoring</p>
-                    </div>
-                </div>
-                <div class="bg-gray-800 rounded-lg border border-gray-700/50 shadow-lg overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-700/50"><h3 class="font-semibold text-white text-sm uppercase tracking-wide">Hoạt động gần đây</h3></div>
-                    <div class="p-6" id="system-logs"><div class="text-gray-500 italic text-sm" id="empty-logs-msg">Chưa có hoạt động nào...</div></div>
-                </div>
-            </div>
-
-            <!-- SURVEILLANCE TAB -->
-            <div id="tab-surveillance" class="hidden fade-in">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
-                            <h3 class="font-semibold flex items-center gap-2"><i class="ph ph-webcam"></i> Camera</h3>
-                            <div class="flex items-center gap-2">
-                                <span id="status-camera" class="text-xs text-gray-500">Đang tắt</span>
-                                <label for="toggle-camera" class="flex items-center cursor-pointer relative"><input type="checkbox" id="toggle-camera" class="sr-only toggle-checkbox" onchange="handleToggleCamera(this)"><div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div><div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div></label>
+                    
+                    <!-- RAM Card -->
+                    <div class="glass-card rounded-2xl p-6 min-h-[160px] flex flex-col justify-between group">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Memory</p>
+                                <h3 class="text-4xl font-bold text-white flex items-baseline gap-1">
+                                    <span id="ram-value">0</span> 
+                                    <span class="text-lg text-slate-500 font-medium" id="ram-total">/ 0 GB</span>
+                                </h3>
                             </div>
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400"><i class="ph-fill ph-memory text-2xl"></i></div>
                         </div>
-                        <div class="aspect-video bg-black flex items-center justify-center relative group overflow-hidden">
-                            <div id="cam-placeholder" class="text-center text-gray-500 absolute inset-0 flex flex-col items-center justify-center"><i class="ph ph-video-camera-slash text-4xl mb-2"></i><p>Không có tín hiệu</p></div>
-                            <img id="cam-display" class="w-full h-full object-contain hidden" alt="Camera Feed">
+                        <div class="w-full bg-slate-700/30 h-1.5 rounded-full overflow-hidden"><div id="ram-bar" class="bg-purple-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                    </div>
+
+                    <!-- Uptime Card (SỬA ĐỔI: Thêm ID để JS kiểm soát trạng thái) -->
+                    <div class="glass-card rounded-2xl p-6 min-h-[160px] flex flex-col justify-between group">
+                        <div class="flex justify-between items-start"><div><p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Uptime</p><h3 class="text-3xl font-bold text-white mt-1" id="uptime-value">--</h3></div><div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><i class="ph-fill ph-clock text-2xl"></i></div></div>
+                        <p class="text-xs text-slate-500 font-bold flex items-center gap-1" id="uptime-status-container">
+                            <span id="uptime-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> 
+                            <span id="uptime-text">Offline</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl flex flex-col flex-1 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-white/5 bg-white/[0.02]"><h3 class="font-bold text-white text-xs uppercase tracking-wide">System Logs</h3></div>
+                    <div class="p-4 overflow-y-auto space-y-1 flex-1 text-sm font-mono" id="system-logs"><div class="text-slate-500 italic text-center py-10">Chưa có log...</div></div>
+                </div>
+            </div>
+
+            <!-- MEDIA TABS -->
+            <div id="tab-screen" class="hidden w-full h-full flex flex-col">
+                <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full border border-white/10">
+                    <div class="p-3 border-b border-white/5 flex justify-between items-center bg-black/20">
+                        <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-monitor text-emerald-400"></i> Remote Screen</h3>
+                        <div class="flex items-center gap-3 bg-white/5 px-3 py-1 rounded-full border border-white/5">
+                            <span id="status-screen" class="text-[10px] text-slate-400 font-bold uppercase">Offline</span>
+                            <!-- NEW TOGGLE SWITCH DESIGN -->
+                            <label class="flex items-center cursor-pointer relative w-10 h-6">
+                                <input type="checkbox" class="sr-only toggle-checkbox" onchange="toggleFeature('screen', this)">
+                                <div class="absolute inset-0 bg-slate-700 rounded-full toggle-label transition-colors"></div>
+                                <div class="dot absolute left-1 top-1 bg-gray-300 w-4 h-4 rounded-full transition-transform"></div>
+                            </label>
                         </div>
                     </div>
-                    <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
-                            <h3 class="font-semibold flex items-center gap-2"><i class="ph ph-monitor"></i> Màn hình</h3>
-                            <div class="flex items-center gap-2">
-                                <span id="status-screen" class="text-xs text-gray-500">Đang tắt</span>
-                                <label for="toggle-screen" class="flex items-center cursor-pointer relative"><input type="checkbox" id="toggle-screen" class="sr-only toggle-checkbox" onchange="handleToggleScreen(this)"><div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div><div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div></label>
-                            </div>
-                        </div>
-                        <div class="aspect-video bg-black flex items-center justify-center relative overflow-hidden">
-                            <div id="screen-placeholder" class="text-center text-gray-500 absolute inset-0 flex flex-col items-center justify-center"><i class="ph ph-monitor-x text-4xl mb-2"></i><p>Chia sẻ màn hình đang tắt</p></div>
-                            <img id="screen-display" class="w-full h-full object-contain hidden" alt="Screen Feed">
-                        </div>
+                    <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden live-bg">
+                        <div id="screen-placeholder" class="text-center text-slate-600"><i class="ph-duotone ph-monitor-play text-4xl mb-2"></i><p>Paused</p></div>
+                        <img id="screen-display" class="w-full h-full object-contain hidden z-10 relative">
                     </div>
                 </div>
             </div>
 
-            <!-- KEYLOGGER TAB -->
-            <div id="tab-keylogger" class="hidden fade-in h-full flex flex-col">
-                <div class="bg-gray-800 rounded-xl border border-gray-700 h-full flex flex-col">
-                    <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                        <h3 class="font-semibold flex items-center gap-2"><i class="ph ph-keyboard"></i> Keylogger Logs</h3>
-                         <div class="flex items-center gap-4">
-                            <button class="text-sm text-gray-400 hover:text-white flex items-center gap-1" onclick="handleClearKeylogs()"><i class="ph ph-trash"></i> Xóa Log</button>
-                            <div class="flex items-center gap-2"><span id="status-keylogger" class="text-xs text-gray-500">Đang tắt</span><label for="toggle-keylogger" class="flex items-center cursor-pointer relative"><input type="checkbox" id="toggle-keylogger" class="sr-only toggle-checkbox" onchange="handleToggleKeylogger(this)"><div class="w-11 h-6 bg-gray-600 rounded-full border border-gray-600 toggle-label transition-colors"></div><div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform duration-200 ease-in-out"></div></label></div>
+            <div id="tab-camera" class="hidden w-full h-full flex flex-col">
+                <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full border border-white/10">
+                    <div class="p-3 border-b border-white/5 flex justify-between items-center bg-black/20">
+                        <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-webcam text-rose-400"></i> Camera</h3>
+                        <div class="flex items-center gap-3 bg-white/5 px-3 py-1 rounded-full border border-white/5">
+                            <span id="status-camera" class="text-[10px] text-slate-400 font-bold uppercase">Offline</span>
+                            <label class="flex items-center cursor-pointer relative w-10 h-6">
+                                <input type="checkbox" class="sr-only toggle-checkbox" onchange="toggleFeature('camera', this)">
+                                <div class="absolute inset-0 bg-slate-700 rounded-full toggle-label transition-colors"></div>
+                                <div class="dot absolute left-1 top-1 bg-gray-300 w-4 h-4 rounded-full transition-transform"></div>
+                            </label>
                         </div>
                     </div>
-                    <div class="flex-1 p-4 bg-gray-900 font-mono text-sm text-gray-400 overflow-y-auto whitespace-pre-wrap leading-relaxed" id="keylogger-output"><span class="text-gray-500 italic">// Logs will appear here...</span></div>
+                    <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden live-bg">
+                        <div id="camera-placeholder" class="text-center text-slate-600"><i class="ph-duotone ph-video-camera-slash text-4xl mb-2"></i><p>No Signal</p></div>
+                        <img id="camera-display" class="w-full h-full object-contain hidden z-10 relative">
+                    </div>
                 </div>
             </div>
 
-            <!-- PROCESSES TAB -->
-            <div id="tab-processes" class="hidden fade-in">
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                    <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                        <h3 class="font-semibold">Running Processes</h3>
+            <!-- KEYLOGGER -->
+            <div id="tab-keylogger" class="hidden w-full h-full flex flex-col">
+                <div class="glass-panel rounded-2xl h-full flex flex-col overflow-hidden">
+                    <div class="p-3 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-keyboard text-amber-400"></i> Keylogger</h3>
+                        <div class="flex gap-3 items-center">
+                            <button class="text-xs text-slate-400 hover:text-white" onclick="document.getElementById('keylogger-output').innerHTML='<span class=\'text-slate-600 italic\'>// Logs start here...</span>'"><i class="ph-bold ph-trash"></i> Clean</button>
+                            <!-- NEW TOGGLE SWITCH DESIGN -->
+                            <label class="flex items-center cursor-pointer relative w-10 h-6">
+                                <input type="checkbox" class="sr-only toggle-checkbox" onchange="toggleFeature('keylogger', this)">
+                                <div class="absolute inset-0 bg-slate-700 rounded-full toggle-label transition-colors"></div>
+                                <div class="dot absolute left-1 top-1 bg-gray-300 w-4 h-4 rounded-full transition-transform"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex-1 p-4 bg-[#0c0f16] font-mono text-sm text-slate-400 overflow-y-auto whitespace-pre-wrap" id="keylogger-output"><span class="text-slate-600 italic">// Logs start here...</span></div>
+                </div>
+            </div>
+
+            <!-- FILE EXPLORER -->
+            <div id="tab-file-explorer" class="hidden w-full h-full flex flex-col">
+                <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full">
+                    <div class="p-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
+                         <div class="flex gap-1">
+                            <button class="p-1.5 rounded hover:bg-white/10 text-slate-400 hover:text-white" onclick="explorerNavigate('..', true)"><i class="ph-bold ph-arrow-up"></i></button>
+                            <button class="p-1.5 rounded hover:bg-white/10 text-slate-400 hover:text-white" onclick="explorerRefresh()"><i class="ph-bold ph-arrows-clockwise"></i></button>
+                        </div>
+                        <div class="flex-1 bg-slate-800/50 border border-white/10 rounded px-3 py-1.5 flex items-center gap-2">
+                            <i class="ph-fill ph-folder text-yellow-500"></i>
+                            <input type="text" id="explorer-path" class="bg-transparent border-none w-full text-xs text-white font-mono outline-none" value="C:\" readonly>
+                        </div>
+                         <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold flex gap-2 items-center" onclick="document.getElementById('file-upload').click()"><i class="ph-bold ph-upload-simple"></i> Upload</button>
+                         <input type="file" id="file-upload" class="hidden" onchange="handleFileUpload(this)">
+                    </div>
+                    <div class="flex-1 overflow-auto bg-[#0f111a]/50">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-white/5 text-slate-100 uppercase font-bold sticky top-0 backdrop-blur-md"><tr><th class="px-4 py-3 w-8"></th><th class="px-2 py-3">Name</th><th class="px-4 py-3 w-24">Type</th><th class="px-4 py-3 w-20 text-right">Size</th><th class="px-4 py-3 w-16"></th></tr></thead>
+                            <tbody class="divide-y divide-white/5 cursor-default select-none" id="file-list"></tbody>
+                        </table>
+                        <div id="file-empty" class="hidden text-center py-10 text-slate-500 italic">Empty Folder</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROCESSES & APPS -->
+            <div id="tab-processes" class="hidden w-full h-full flex flex-col">
+                <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full">
+                    <div class="p-4 border-b border-white/5 flex justify-between items-center">
+                        <h3 class="font-bold text-white">Processes</h3>
                         <div class="flex gap-2">
-                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm" onclick="handleListProcesses()">Refresh List</button>
-                            <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm" onclick="handleStartProcess()">Start Process</button>
+                            <button class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-xs text-white" onclick="sendCommand({command:'processes'})">Refresh</button>
+                            <button class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded text-xs text-white font-bold" onclick="openModal()">New Task</button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                        <table class="w-full text-left text-sm text-gray-400">
-                            <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs sticky top-0"><tr><th class="px-6 py-3">Name</th><th class="px-6 py-3">PID</th><th class="px-6 py-3">Memory</th><th class="px-6 py-3 text-right">Action</th></tr></thead>
-                            <tbody class="divide-y divide-gray-700" id="process-list"><tr><td colspan="4" class="px-6 py-4 text-center italic">Click Refresh to load processes...</td></tr></tbody>
-                        </table>
-                    </div>
+                    <div class="flex-1 overflow-auto"><table class="w-full text-left text-xs text-slate-300"><thead class="bg-white/5 text-slate-100 font-bold sticky top-0 backdrop-blur-md"><tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">PID</th><th class="px-4 py-3">Mem</th><th class="px-4 py-3 text-right">Action</th></tr></thead><tbody class="divide-y divide-white/5" id="process-list"></tbody></table></div>
                 </div>
             </div>
 
-            <!-- APPLICATIONS TAB -->
-            <div id="tab-applications" class="hidden fade-in">
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                     <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                        <h3 class="font-semibold">Installed Applications</h3>
-                         <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm" onclick="handleListApps()">Scan Installed Apps</button>
-                    </div>
-                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                        <table class="w-full text-left text-sm text-gray-400">
-                            <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs sticky top-0">
-                                <tr>
-                                    <th class="px-6 py-3">Application Name</th>
-                                    <th class="px-6 py-3 text-center">Status</th>
-                                    <th class="px-6 py-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-700" id="app-list">
-                                <tr><td colspan="3" class="px-6 py-4 text-center italic">Click Scan to load installed apps...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div id="tab-applications" class="hidden w-full h-full flex flex-col">
+                <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full">
+                    <div class="p-4 border-b border-white/5 flex justify-between items-center"><h3 class="font-bold text-white">Applications</h3><button class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-xs text-white" onclick="sendCommand({command:'applications'})">Scan</button></div>
+                    <div class="flex-1 overflow-auto"><table class="w-full text-left text-xs text-slate-300"><thead class="bg-white/5 text-slate-100 font-bold sticky top-0 backdrop-blur-md"><tr><th class="px-4 py-3">Name</th><th class="px-4 py-3 text-center">Status</th><th class="px-4 py-3 text-right">Action</th></tr></thead><tbody class="divide-y divide-white/5" id="app-list"></tbody></table></div>
                 </div>
             </div>
 
-            <!-- TERMINAL TAB -->
-            <div id="tab-terminal" class="hidden fade-in h-full flex flex-col">
-                 <div class="bg-black rounded-xl border border-gray-700 h-full flex flex-col shadow-2xl overflow-hidden">
-                    <div class="bg-gray-800 px-4 py-2 flex items-center justify-between border-b border-gray-700">
-                        <span class="text-gray-300 text-xs">Remote Terminal Session</span>
-                        <div class="flex gap-1.5"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div></div>
-                    </div>
-                    <div class="flex-1 p-4 text-gray-300 overflow-y-auto cursor-text" id="terminal-container" tabindex="0"></div>
+            <!-- TERMINAL -->
+            <div id="tab-terminal" class="hidden w-full h-full flex flex-col">
+                 <div class="bg-[#1e1e1e]/95 rounded-2xl border border-white/10 h-full flex flex-col shadow-2xl overflow-hidden">
+                    <div class="bg-[#2d2d2d] px-4 py-2 flex items-center justify-between border-b border-black/40 text-xs text-slate-400 font-mono"><span>Administrator@Remote</span></div>
+                    <div class="flex-1 p-4 text-slate-300 overflow-y-auto font-mono text-xs" id="term-out" tabindex="0"></div>
                  </div>
             </div>
         </div>
     </main>
 
-    <!-- Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 border border-indigo-500 text-white px-4 py-3 rounded shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
-        <i class="ph ph-info text-indigo-400 text-xl"></i><span id="toast-message">Notification</span>
+    <!-- UI COMPONENTS -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800/90 border border-white/10 text-white px-4 py-3 rounded-xl shadow-2xl translate-y-20 opacity-0 transition-all z-50 flex items-center gap-3"><i class="ph-fill ph-info text-indigo-400"></i><span id="toast-msg" class="text-xs font-bold"></span></div>
+
+    <div id="modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="glass-panel w-96 rounded-2xl p-6 shadow-2xl transform scale-95 opacity-0 transition-all" id="modal-panel">
+            <h3 class="text-lg font-bold text-white mb-4">Run Task</h3>
+            <input type="text" id="task-input" class="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-3 text-white text-sm mb-4 outline-none focus:border-indigo-500" placeholder="notepad.exe" onkeydown="if(event.key==='Enter') runTask()">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-slate-400 text-xs hover:text-white">Cancel</button>
+                <button onclick="runTask()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Run</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // UTILS
-        function base64ToBlobFast(base64, type = 'image/bmp') { try { return new Blob([Uint8Array.from(atob(base64), c => c.charCodeAt(0))], { type }); } catch (e) { console.error(e); return null; } }
-        function decodeBinary(input) { try { return new TextDecoder('utf-8').decode(Uint8Array.from(atob(input), c => c.charCodeAt(0))); } catch (e) { return input; } }
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast'), msg = document.getElementById('toast-message');
-            msg.innerText = message;
-            toast.className = `fixed bottom-5 right-5 bg-gray-800 border ${type === 'error' ? 'border-red-500' : 'border-indigo-500'} text-white px-4 py-3 rounded shadow-lg transition-all duration-300 z-50 flex items-center gap-3`;
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-        }
-        function logToSystem(msg) {
-            const logDiv = document.getElementById('system-logs'), time = new Date().toLocaleTimeString('vi-VN', { hour12: false });
-            if(document.getElementById('empty-logs-msg')) document.getElementById('empty-logs-msg').remove();
-            const item = document.createElement('div');
-            item.className = "flex items-center gap-3 mb-3 text-sm fade-in";
-            item.innerHTML = `<div class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div><div class="text-gray-400"><span class="font-mono text-gray-500 mr-2">[${time}]</span><span class="text-gray-300">${msg}</span></div>`;
-            logDiv.prepend(item);
-            if (logDiv.children.length > 20) logDiv.lastElementChild.remove();
-        }
-
-        let isCameraActive = false, isScreenActive = false, currentFrameUrl, currentCamFrameUrl, currentTerminalCmd = "", currentPath = "C:\\";
-        function escapeHTML(str) { return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])); }
-        function buildCurrentLineHTML() { return `<div id="current-line" class="term-input-line"><span class="prompt">${escapeHTML(currentPath.trim())}&gt;</span><span class="whitespace-pre-wrap break-all">${escapeHTML(currentTerminalCmd)}</span><span class="cursor"></span></div>`; }
-        function scrollToTerminalBottom() { const c = document.getElementById("terminal-container"); c.scrollTop = c.scrollHeight; }
-        function updateCurrentLine() { const l = document.getElementById("current-line"); if(l) l.outerHTML = buildCurrentLineHTML(); scrollToTerminalBottom(); }
-
-        const DISCOVERY_SERVER_URL = "ws://localhost:5000"; 
-        let discoverySocket = null, targetSocket = null;
-        function initDiscovery() {
-            try {
-                discoverySocket = new WebSocket(DISCOVERY_SERVER_URL);
-                discoverySocket.onopen = () => setInterval(() => { if(discoverySocket.readyState === WebSocket.OPEN) discoverySocket.send(JSON.stringify({type: "GET_LIST"})); }, 2000);
-                discoverySocket.onmessage = (e) => { const d = JSON.parse(e.data); if(d.type === "DEVICE_LIST") updateDeviceDropdown(d.devices); };
-            } catch (error) { console.error(error); }
-        }
-        function updateDeviceDropdown(devices) {
-            const sel = document.getElementById('device-selector'), val = sel.value;
-            sel.innerHTML = '<option value="">-- Select a Target --</option>';
-            devices.forEach(dev => { const opt = document.createElement('option'); opt.value = `ws://${dev.ip}:${dev.port}`; opt.text = `${dev.name} (${dev.ip})`; sel.appendChild(opt); });
-            sel.value = val;
-        }
-        document.getElementById('device-selector').addEventListener('change', function() { if(this.value) { disconnectCurrentTarget(); connectToTarget(this.value); } });
-        function disconnectCurrentTarget() { if(targetSocket) targetSocket.close(); targetSocket = null; document.getElementById('ws-status-text').innerText = "Disconnected"; document.getElementById('ws-status-text').className = "text-red-500 font-bold"; document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; resetUIState(); }
-        function resetUIState() { isCameraActive = isScreenActive = false; document.getElementById('toggle-camera').checked = false; document.getElementById('toggle-screen').checked = false; document.getElementById('toggle-keylogger').checked = false; handleClearKeylogs(); document.getElementById('system-logs').innerHTML = '<div class="text-gray-500 italic text-sm" id="empty-logs-msg">Chưa có hoạt động nào...</div>'; document.getElementById('terminal-container').innerHTML = ''; }
-        function connectToTarget(url) {
-            try {
-                targetSocket = new WebSocket(url);
-                targetSocket.onopen = () => { document.getElementById('ws-status-text').innerText = "Connected"; document.getElementById('ws-status-text').className = "text-green-400 font-bold"; document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-green-500"; showToast("Đã kết nối tới Target!"); logToSystem(`Kết nối thành công tới ${url}`); document.getElementById("terminal-container").innerHTML = '<div class="term-line text-gray-400">--- Connected to Target ---</div>' + buildCurrentLineHTML(); };
-                targetSocket.onclose = () => { if(this === targetSocket) { document.getElementById('ws-status-text').innerText = "Disconnected"; document.getElementById('ws-status-text').className = "text-red-500 font-bold"; document.getElementById('ws-status-dot').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse"; showToast("Mất kết nối Target!", "error"); }};
-                targetSocket.onmessage = handleTargetMessage;
-            } catch (error) { showToast("Lỗi kết nối Target: " + error.message, "error"); }
-        }
-        function sendCommand(cmd) { if(targetSocket && targetSocket.readyState === WebSocket.OPEN) targetSocket.send(JSON.stringify(cmd)); else showToast("Chưa kết nối tới Target nào!", "error"); }
+        // --- STATE & CORE ---
+        let ws, activeTab = 'dashboard', curPath = 'C:\\', currentTargetUrl = '', toastTimeout, fire_ex = false;
+        const state = { screen: false, camera: false, keylogger: false };
+        const iconMap = { dashboard: 'ph-squares-four', screen: 'ph-monitor', camera: 'ph-webcam', keylogger: 'ph-keyboard', processes: 'ph-chart-bar', applications: 'ph-app-window', terminal: 'ph-terminal-window', 'file-explorer': 'ph-folder-open' };
+        const colorMap = { dashboard: 'text-indigo-400', screen: 'text-emerald-400', camera: 'text-rose-400', keylogger: 'text-amber-400', processes: 'text-cyan-400', applications: 'text-violet-400', terminal: 'text-orange-400', 'file-explorer': 'text-yellow-400' };
         
-        function handleTargetMessage(event) {
-            let data; try { data = JSON.parse(event.data); } catch(e) { return; }
-            try {
-                if (data.what === "SYS") {
-                    const msg = data.message;
-                    if (msg.trim().startsWith('{')) {
-                         const s = JSON.parse(msg);
-                         document.getElementById('cpu-value').innerText = parseFloat(s.cpu||0).toFixed(1)+"%"; document.getElementById('cpu-bar').style.width = parseFloat(s.cpu||0).toFixed(1)+"%";
-                         document.getElementById('ram-value').innerText = parseFloat(s.ram_used_gb||0).toFixed(1); document.getElementById('ram-total').innerText = `/ ${parseFloat(s.ram_total_gb||0).toFixed(1)} GB`; document.getElementById('ram-bar').style.width = parseFloat(s.ram_percent||0).toFixed(1)+"%";
-                         document.getElementById('uptime-value').innerText = s.uptime || "--";
-                    }
-                    return;
-                }
-                if (data.what === "PATH") { currentPath = data.message; updateCurrentLine(); return; }
-                if (data.what === "Info") { if(activeTab === 'terminal' && data.message !== "") { const c = document.getElementById("terminal-container"); document.getElementById("current-line")?.remove(); const div = document.createElement('div'); div.className = "term-line"; div.textContent = data.message; c.appendChild(div); c.insertAdjacentHTML('beforeend', buildCurrentLineHTML()); scrollToTerminalBottom(); } else logToSystem(data.message); return; }
-                if (data.what === "Error") { showToast(`Lỗi: ${data.message}`, 'error'); logToSystem(`Lỗi: ${data.message}`); }
-                else if (data.what === "Screenshot") { const blob = base64ToBlobFast(data.message, 'image/bmp'); if(blob) { const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `screenshot_${Date.now()}.bmp`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast("Đã tải xuống Screenshot"); } }
-                else if (data.what === "Processes") { renderProcessList(decodeBinary(data.message)); showToast("Đã cập nhật danh sách Process"); }
-                else if (data.what === "Applications") { 
-                    try { const appList = JSON.parse(data.message); renderAppList(appList); showToast("Đã cập nhật danh sách Ứng dụng"); } 
-                    catch(e) { console.error("Lỗi JSON App", e); renderAppListText(decodeBinary(data.message)); }
-                }
-                else if (data.what === "Camera") { if(isCameraActive) { const blob = base64ToBlobFast(data.message, 'image/bmp'); if(blob) { if(currentFrameUrl) URL.revokeObjectURL(currentFrameUrl); currentFrameUrl = URL.createObjectURL(blob); document.getElementById('cam-display').src = currentFrameUrl; document.getElementById('cam-display').classList.remove('hidden'); document.getElementById('cam-placeholder').classList.add('hidden'); } } }
-                else if (data.what === "Screen") { if(isScreenActive) { const blob = base64ToBlobFast(data.message, 'image/bmp'); if(blob) { if(currentCamFrameUrl) URL.revokeObjectURL(currentCamFrameUrl); currentCamFrameUrl = URL.createObjectURL(blob); document.getElementById('screen-display').src = currentCamFrameUrl; document.getElementById('screen-display').classList.remove('hidden'); document.getElementById('screen-placeholder').classList.add('hidden'); } } }
-                else if (data.what === "Keylogger") { const l = document.getElementById('keylogger-output'); if(l.innerText.includes("// Logs")) l.innerHTML=""; l.textContent += data.message; l.scrollTop = l.scrollHeight; }
-            } catch (err) { console.error("Error handling target message", err); }
-        }
+        // --- HELPERS (Added Safe String for HTML Attributes) ---
+        const safeStr = (str) => str ? str.replace(/\\/g, "\\\\").replace(/'/g, "\\'") : "";
 
-        function renderProcessList(textData) {
-            const tbody = document.getElementById('process-list'); tbody.innerHTML = "";
-            textData.split('\n').forEach(line => {
-                if(!line.trim()) return;
-                let parts = line.trim().split(/\s+/), pid = 'N/A', mem = 'N/A', name = line;
-                const pidMatch = line.match(/(\d+)/); if (pidMatch) pid = pidMatch[0];
-                const memMatch = line.match(/([\d,]+\s*K)/i); if (memMatch) mem = memMatch[0];
-                if(pid !== 'N/A') { name = line.substring(0, line.indexOf(pid)).trim(); if (!name) name = parts[0]; }
-                tbody.innerHTML += `<tr class="hover:bg-gray-800/50 transition border-b border-gray-700"><td class="px-6 py-3 font-medium text-white">${name}</td><td class="px-6 py-3 font-mono text-xs text-indigo-400">${pid}</td><td class="px-6 py-3 text-gray-400">${mem}</td><td class="px-6 py-3 text-right"><button onclick="handleStopProcess('${pid}')" class="text-red-400 hover:text-red-300 text-xs border border-red-500/30 hover:bg-red-500/10 px-2 py-1 rounded transition">Kill</button></td></tr>`;
-            });
-        }
+        // --- UI LOGIC ---
+        function switchTab(id) {
+            const oldNav = document.getElementById(`nav-${activeTab}`);
+            const newNav = document.getElementById(`nav-${id}`);
+            
+            if(oldNav) {
+                oldNav.className = "nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent";
+                const oldIcon = oldNav.querySelector('i');
+                if(oldIcon) oldIcon.className = `ph-duotone ${iconMap[activeTab]} text-lg group-hover:${colorMap[activeTab]} transition-colors`;
+            }
 
-        function renderAppList(appList) {
-            const tbody = document.getElementById('app-list');
-            tbody.innerHTML = "";
-            appList.forEach(app => {
-                const isRunning = app.is_running;
-                const safeName = (app.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-                const safePath = (app.exec_path || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+            if(newNav) {
+                newNav.className = "nav-item active-nav w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl bg-indigo-500/10 text-indigo-300 border border-indigo-500/20";
+                const newIcon = newNav.querySelector('i');
+                if(newIcon) newIcon.className = `ph-duotone ${iconMap[id]} text-lg`;
+            }
+
+            requestAnimationFrame(() => {
+                document.getElementById(`tab-${activeTab}`).classList.add('hidden');
+                const nextTab = document.getElementById(`tab-${id}`);
+                nextTab.classList.remove('hidden');
+                nextTab.classList.remove('fade-in');
+                void nextTab.offsetWidth;
+                nextTab.classList.add('fade-in');
                 
-                let exeName = "";
-                if (app.exec_path) {
-                    const parts = app.exec_path.split('\\');
-                    exeName = parts[parts.length - 1]; 
-                }
-                const stopTarget = exeName ? exeName : safeName;
-
-                const statusHtml = isRunning 
-                    ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20"><div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>Running</span>`
-                    : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">Stopped</span>`;
-                
-                const actionBtn = isRunning
-                    ? `<button onclick="handleStopApp('${stopTarget}')" class="text-red-400 hover:text-red-300 border border-red-500/30 hover:bg-red-500/10 px-3 py-1 rounded text-xs transition flex items-center gap-1 ml-auto"><i class="ph ph-stop"></i> Stop</button>`
-                    : `<button onclick="handleStartApp('${safeName}', '${safePath}')" class="text-green-400 hover:text-green-300 border border-green-500/30 hover:bg-green-500/10 px-3 py-1 rounded text-xs transition flex items-center gap-1 ml-auto"><i class="ph ph-play"></i> Start</button>`;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-800/50 transition border-b border-gray-700">
-                        <td class="px-6 py-3 font-medium text-white">
-                            <div class="flex items-center gap-2">
-                                <i class="ph ph-cube text-indigo-500"></i> 
-                                <div class="flex flex-col">
-                                    <span>${app.name}</span>
-                                    ${app.exec_path ? `<span class="text-[10px] text-gray-500 font-mono">${app.exec_path}</span>` : ''}
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-3 text-center">${statusHtml}</td>
-                        <td class="px-6 py-3 text-right">${actionBtn}</td>
-                    </tr>
-                `;
-            });
-        }
-        function renderAppListText(textData) {
-            const tbody = document.getElementById('app-list'); tbody.innerHTML = "";
-            textData.split('\n').forEach(line => {
-                if(!line.trim()) return;
-                tbody.innerHTML += `<tr class="hover:bg-gray-800/50 transition border-b border-gray-700"><td class="px-6 py-3 font-medium text-white flex items-center gap-2"><i class="ph ph-cube text-indigo-500"></i> ${line}</td><td class="px-6 py-3 text-center text-gray-500">-</td><td class="px-6 py-3 text-right"><button class="text-green-400 hover:text-green-300"><i class="ph ph-play"></i></button></td></tr>`;
+                document.getElementById('page-title').innerText = id.charAt(0).toUpperCase() + id.slice(1);
+                activeTab = id;
+                if(id === 'terminal') setTimeout(() => document.getElementById('term-out').focus(), 50);
             });
         }
 
-        const terminalContainer = document.getElementById("terminal-container");
-        terminalContainer.addEventListener("click", () => terminalContainer.focus());
-        terminalContainer.addEventListener("keydown", (e) => {
-            if (document.activeElement !== terminalContainer) return;
-            const key = e.key;
-            if (key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); currentTerminalCmd += key; updateCurrentLine(); return; }
-            if (key === "Enter") { e.preventDefault(); document.getElementById("current-line")?.remove(); const div = document.createElement('div'); div.className = "term-line"; div.textContent = `${currentPath.trim()}> ${currentTerminalCmd}`; terminalContainer.appendChild(div); if (targetSocket && targetSocket.readyState === WebSocket.OPEN) targetSocket.send(JSON.stringify({ terminal: currentTerminalCmd, path: currentPath })); currentTerminalCmd = ""; terminalContainer.insertAdjacentHTML('beforeend', buildCurrentLineHTML()); scrollToTerminalBottom(); }
-            else if (key === "Backspace") { e.preventDefault(); if (currentTerminalCmd.length > 0) { currentTerminalCmd = currentTerminalCmd.slice(0, -1); updateCurrentLine(); } }
-        });
+        function toggleFeature(feat, cb) {
+            state[feat] = cb.checked;
+            sendCommand({ command: cb.checked ? `start_${feat}` : `stop_${feat}` });
+            
+            const status = document.getElementById(`status-${feat}`);
+            if(status) {
+                status.innerText = cb.checked ? "Live" : "Offline";
+                status.className = `text-[10px] font-bold uppercase ${cb.checked ? "text-emerald-400" : "text-slate-400"}`;
+            }
 
-        let activeTab = 'dashboard';
-        function switchTab(tabId) {
-            document.getElementById(`tab-${activeTab}`).classList.add('hidden'); document.getElementById(`nav-${activeTab}`).classList.remove('bg-gray-700', 'text-white'); document.getElementById(`nav-${activeTab}`).classList.add('text-gray-300');
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden'); document.getElementById(`nav-${tabId}`).classList.add('bg-gray-700', 'text-white'); document.getElementById(`nav-${tabId}`).classList.remove('text-gray-300');
-            activeTab = tabId;
-            const t = { 'dashboard': 'Tổng quan hệ thống', 'surveillance': 'Giám sát Camera / Màn hình', 'keylogger': 'Nhật ký bàn phím (Keylogger)', 'processes': 'Quản lý Tiến trình (Processes)', 'applications': 'Quản lý Ứng dụng', 'terminal': 'Terminal' };
-            document.getElementById('page-title').innerText = t[tabId] || 'Remote Admin Dashboard';
-            if(tabId === 'terminal') setTimeout(() => document.getElementById("terminal-container").focus(), 100);
-        }
+            if (feat === 'keylogger') {
+                const l = document.getElementById('keylogger-output');
+                l.classList.toggle('text-emerald-400', cb.checked);
+                l.classList.toggle('text-slate-400', !cb.checked);
+            }
 
-        function handleScreenshot() { sendCommand({ command: "screenshot" }); }
-        function handleShutdown() { if (confirm("Tắt máy?")) sendCommand({ command: "shutdown" }); }
-        function handleRestart() { if (confirm("Khởi động lại?")) sendCommand({ command: "restart" }); }
-        function handleToggleCamera(cb) { isCameraActive = cb.checked; sendCommand({ command: cb.checked ? "start_camera" : "stop_camera" }); updateStatus('camera', cb.checked); if(!cb.checked) { document.getElementById('cam-display').classList.add('hidden'); document.getElementById('cam-placeholder').classList.remove('hidden'); } }
-        function handleToggleScreen(cb) { isScreenActive = cb.checked; sendCommand({ command: cb.checked ? "start_screen" : "stop_screen" }); updateStatus('screen', cb.checked); if(!cb.checked) { document.getElementById('screen-display').classList.add('hidden'); document.getElementById('screen-placeholder').classList.remove('hidden'); } }
-        function handleToggleKeylogger(cb) { sendCommand({ command: cb.checked ? "start_keylogger" : "stop_keylogger" }); updateStatus('keylogger', cb.checked); const l = document.getElementById('keylogger-output'); l.classList.toggle('text-green-400', cb.checked); l.classList.toggle('text-gray-400', !cb.checked); }
-        function handleClearKeylogs() { const l = document.getElementById('keylogger-output'), isG = document.getElementById('toggle-keylogger').checked; l.className = `flex-1 p-4 bg-gray-900 font-mono text-sm overflow-y-auto whitespace-pre-wrap leading-relaxed ${isG?'text-green-400':'text-gray-400'}`; l.innerHTML = '<span class="text-gray-500 italic">// Logs will appear here...</span>'; }
-        function handleListProcesses() { sendCommand({ command: "processes" }); }
-        function handleStopProcess(pid) { if(confirm(`Kill PID ${pid}?`)) sendCommand({ command: "stop_process", pid: parseInt(pid) }); }
-        function handleStartProcess() { const name = prompt("Nhập tên process:"); if(name) sendCommand({ command: "start_application", name: name }); }
-        function handleListApps() { sendCommand({ command: "applications" }); }
-        
-        function handleStartApp(appName, appPath) {
-             const target = (appPath && appPath.trim() !== "") ? appPath : appName;
-             if(confirm(`Khởi chạy ứng dụng: ${appName}?`)) {
-                 sendCommand({ command: "start_application", name: target });
-             }
-        }
-        
-        function handleStopApp(exeName) {
-            if(confirm(`Dừng toàn bộ ứng dụng: ${exeName}?`)) {
-                sendCommand({ command: "stop_application", exe_name: exeName });
+            if(!cb.checked) {
+                const img = document.getElementById(`${feat}-display`);
+                const holder = document.getElementById(`${feat}-placeholder`);
+                if(img) img.classList.add('hidden');
+                if(holder) holder.classList.remove('hidden');
             }
         }
 
-        function updateStatus(id, isActive) { const el = document.getElementById(`status-${id}`); el.innerText = isActive ? "Đang bật" : "Đang tắt"; el.className = isActive ? "text-xs text-green-400 font-bold" : "text-xs text-gray-500"; }
-        initDiscovery();
+        // --- WEBSOCKET ---
+        function connect(url) {
+            if(ws) ws.close();
+            currentTargetUrl = url;
+            try {
+                ws = new WebSocket(url);
+                ws.onopen = () => { 
+                    updateConn(true); showToast("Connected!", "success");
+                    document.getElementById('term-out').innerHTML = '<div class="term-line text-emerald-500 mb-2">--- Secure Connection Established ---</div>';
+                    updateTermLine();
+                    // sendCommand({command: 'list_directory', path: 'C:\\'});
+                };
+                ws.onclose = () => { updateConn(false); showToast("Disconnected", "error"); };
+                ws.onmessage = (e) => processMsg(e.data);
+            } catch(e) { showToast("Connection Error", "error"); }
+        }
+
+        function processMsg(raw) {
+            try {
+                const d = JSON.parse(raw);
+                if(d.what === "SYS") {
+                    const s = JSON.parse(d.message);
+                    updateDash(s);
+                }
+                else if(d.what === "DirectoryList") renderFiles(d.message);
+                else if(d.what === "Processes") renderProcs(d.message);
+                else if(d.what === "Applications") renderApps(d.message);
+                else if(d.what === "Screen" && state.screen) updateImg('screen', d.message);
+                else if(d.what === "Camera" && state.camera) updateImg('camera', d.message);
+                else if(d.what === "Screenshot") downloadBlob(d.message, `screenshot_${Date.now()}.bmp`);
+                else if(d.what === "Keylogger") {
+                    const l = document.getElementById('keylogger-output');
+                    if(l.innerText.includes("// Logs start here...")) l.innerHTML="";
+                    l.textContent += d.message;
+                    l.scrollTop = l.scrollHeight;
+                }
+                else if(d.what === "PATH") { curPath = d.message; if(!fire_ex){ sendCommand({command: 'list_directory', path: curPath}), fire_ex = true; } updateTermLine(); }
+                else if(d.what === "Info") { 
+                    if(activeTab==='terminal') {
+                         const c = document.getElementById("term-out");
+                         document.getElementById("current-line")?.remove();
+                         const div = document.createElement('div');
+                         div.className = "term-line whitespace-pre-wrap break-all";
+                         div.textContent = d.message;
+                         c.appendChild(div);
+                         c.insertAdjacentHTML('beforeend', buildCurrentLineHTML());
+                         c.scrollTop = c.scrollHeight;
+                    } 
+                    else logSys(d.message); 
+                }
+                else if(d.what === "FileDownload") downloadBlob(d.message, d.filename);
+            } catch(e) {}
+        }
+
+        // --- RENDERERS ---
+        function renderFiles(json) {
+            const files = JSON.parse(json);
+            const tbody = document.getElementById('file-list');
+            document.getElementById('file-empty').classList.toggle('hidden', files.length > 0);
+            
+            tbody.innerHTML = files.map(f => `
+                <tr class="hover:bg-white/5 border-b border-white/5 group" ${f.is_dir ? `ondblclick="explorerNavigate('${safeStr(f.name)}', true)"` : ''}>
+                    <td class="px-4 py-2"><i class="ph-fill ${f.is_dir ? 'ph-folder text-yellow-400' : 'ph-file text-slate-500'} text-lg"></i></td>
+                    <td class="px-2 py-2 font-medium text-white group-hover:text-indigo-300 cursor-pointer">${f.name}</td>
+                    <td class="px-4 py-2 text-slate-500">${f.is_dir ? 'Folder' : (f.type||'File')}</td>
+                    <td class="px-4 py-2 text-right text-slate-500 font-mono">${f.is_dir ? '' : formatSize(f.size)}</td>
+                    <td class="px-4 py-2 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                        ${!f.is_dir ? `<button class="hover:text-emerald-400 mr-2" onclick="dlFile('${safeStr(f.name)}')"><i class="ph-bold ph-download-simple"></i></button>` : ''}
+                        <button class="hover:text-rose-400" onclick="delFile('${safeStr(f.name)}')"><i class="ph-bold ph-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('explorer-path').value = curPath;
+        }
+
+        function renderProcs(dataInput) {
+            try { 
+                const data = JSON.parse(dataInput);
+                if (Array.isArray(data)) {
+                    document.getElementById('process-list').innerHTML = data.map(proc => 
+                        createProcRow(proc.name || "Unknown", proc.pid || "N/A", proc.memory || "N/A")
+                    ).join('');
+                    return;
+                }
+            } catch (e) {}
+
+            const decoded = typeof dataInput === 'string' ? decodeBinary(dataInput) : dataInput;
+            const lines = decoded.split('\n').filter(l => l.trim());
+            
+            document.getElementById('process-list').innerHTML = lines.map(line => {
+                const match = line.match(/^(.+?)\s+(\d+)\s+/);
+                if (match) {
+                    const name = match[1].trim();
+                    const pid = match[2];
+                    const memMatch = line.match(/([\d,]+\s*[KMG]B?)/i);
+                    const mem = memMatch ? memMatch[0] : 'N/A';
+                    return createProcRow(name, pid, mem);
+                }
+                return '';
+            }).join('');
+        }
+
+        function createProcRow(name, pid, mem) {
+            return `<tr class="hover:bg-white/5 border-b border-white/5"><td class="px-4 py-2 text-white truncate max-w-[150px]" title="${name}">${name}</td><td class="px-4 py-2 text-indigo-400 font-mono">${pid}</td><td class="px-4 py-2 text-slate-500">${mem}</td><td class="px-4 py-2 text-right"><button class="text-rose-400 hover:text-white text-[10px] border border-rose-500/30 px-2 py-1 rounded" onclick="killProc('${pid}')">Kill</button></td></tr>`;
+        }
+
+        function renderApps(json) {
+            try {
+                const apps = JSON.parse(json);
+                document.getElementById('app-list').innerHTML = apps.map(app => {
+                    // Trích xuất tên file exe để dùng cho nút Stop (taskkill cần Image Name)
+                    let stopName = app.name; 
+                    if (app.exec_path && app.exec_path.includes('\\')) {
+                        const parts = app.exec_path.split('\\');
+                        stopName = parts[parts.length - 1]; 
+                    }
+                    
+                    const startTarget = app.exec_path || app.name;
+
+                    // [SỬA ĐỔI] Đường dẫn hiển thị full, tự xuống dòng (break-all) chứ không cắt bớt (...)
+                    return `<tr class="hover:bg-white/5 border-b border-white/5">
+                        <td class="px-4 py-3 text-white flex items-center gap-3">
+                            <div class="w-6 h-6 rounded bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0"><i class="ph-fill ph-cube"></i></div>
+                            <div class="flex flex-col min-w-0">
+                                <span>${app.name}</span>
+                                ${app.exec_path ? `<span class="text-[10px] text-slate-500 font-mono break-all">${app.exec_path}</span>` : ''}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center w-24">${app.is_running ? '<span class="text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">RUNNING</span>' : '<span class="text-slate-500 text-[10px]">STOPPED</span>'}</td>
+                        <td class="px-4 py-3 text-right w-24">
+                            ${app.is_running 
+                                ? `<button class="text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 px-2 py-1 rounded text-[10px]" onclick="stopApp('${safeStr(stopName)}')">Stop</button>` 
+                                : `<button class="text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 rounded text-[10px]" onclick="startApp('${safeStr(startTarget)}')">Launch</button>`}
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch(e) {}
+        }
+
+        // --- HELPERS ---
+        function sendCommand(obj) { if(ws?.readyState===1) ws.send(JSON.stringify(obj)); else showToast("No Connection", "error"); }
+        function sendSysCommand(cmd) { if(confirm(`Confirm ${cmd}?`)) sendCommand({command: cmd}); }
+        
+        function startApp(n) { 
+            if(confirm('Launch application?')) {
+                // Gửi đường dẫn RAW, không thêm ngoặc kép để ShellExecute hoạt động đúng
+                sendCommand({command: 'start_application', name: n}); 
+            } 
+        }
+
+        function stopApp(n) { if(confirm('Stop application?')) sendCommand({command: 'stop_application', exe_name: n}); }
+        function killProc(pid) { if(confirm('Kill process?')) sendCommand({command: 'stop_process', pid: parseInt(pid)}); }
+
+        function openRemoteControl() {
+            if (!currentTargetUrl) { showToast("Vui lòng kết nối thiết bị trước!", "error"); return; }
+            const screenToggle = document.querySelector('input[onchange="toggleFeature(\'screen\', this)"]');
+            if (screenToggle && screenToggle.checked) { screenToggle.click(); showToast("Đã dừng Stream để chuyển sang điều khiển", "info"); }
+            window.open(`remote.html?ws=${encodeURIComponent(currentTargetUrl)}`, "RemoteControl", "width=1280,height=720");
+        }
+
+        function updateImg(id, b64) {
+            const img = document.getElementById(`${id}-display`);
+            const hold = document.getElementById(`${id}-placeholder`);
+            img.src = URL.createObjectURL(b64toBlob(b64));
+            img.classList.remove('hidden'); hold.classList.add('hidden');
+        }
+        function b64toBlob(b64) { return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], {type: 'image/bmp'}); }
+        function decodeBinary(input) { try { return new TextDecoder('utf-8').decode(Uint8Array.from(atob(input), c => c.charCodeAt(0))); } catch (e) { return input; } }
+        
+        function downloadBlob(b64, name) {
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))])); 
+            a.download = name; document.body.appendChild(a); a.click(); a.remove(); showToast("Downloaded", "success");
+        }
+        
+        // [SỬA ĐỔI] Update Connection State bao gồm cả Uptime Status
+        function updateConn(online) {
+            const s = document.getElementById('ws-status-text'); const d = document.getElementById('ws-status-dot'); const p = document.getElementById('ws-ping-dot');
+            s.innerText = online ? "Online" : "Offline"; s.className = `text-xs font-bold leading-none ${online?'text-emerald-400':'text-slate-500'}`;
+            d.className = `relative inline-flex rounded-full h-2.5 w-2.5 ${online?'bg-emerald-500':'bg-slate-600'}`;
+            p.classList.toggle('hidden', !online);
+
+            // Cập nhật Uptime Status UI
+            const upText = document.getElementById('uptime-text');
+            const upDot = document.getElementById('uptime-dot');
+            if(online) {
+                upText.innerText = "Active"; upText.className = "text-emerald-500";
+                upDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse";
+            } else {
+                upText.innerText = "Offline"; upText.className = "text-slate-500";
+                upDot.className = "w-1.5 h-1.5 rounded-full bg-slate-500";
+                document.getElementById('uptime-value').innerText = "--";
+            }
+        }
+
+        function updateDash(s) {
+            document.getElementById('cpu-value').innerText = parseFloat(s.cpu||0).toFixed(1)+"%"; document.getElementById('cpu-bar').style.width = s.cpu+"%";
+            document.getElementById('ram-value').innerText = parseFloat(s.ram_used_gb||0).toFixed(1); 
+            document.getElementById('ram-total').innerText = `/ ${parseFloat(s.ram_total_gb||0).toFixed(1)} GB`; 
+            document.getElementById('ram-bar').style.width = s.ram_percent+"%";
+            document.getElementById('uptime-value').innerText = s.uptime || "--";
+        }
+        function logSys(msg) {
+            const div = document.getElementById('system-logs');
+            div.insertAdjacentHTML('afterbegin', `<div class="flex gap-2 py-1 px-1 border-b border-white/5"><span class="text-indigo-400">${new Date().toLocaleTimeString('vi-VN')}</span><span class="text-slate-300">${msg}</span></div>`);
+            if(div.children.length > 20) div.lastElementChild.remove();
+        }
+        function showToast(msg, type) {
+            clearTimeout(toastTimeout);
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.className = `fixed bottom-6 right-6 border text-white px-4 py-3 rounded-xl shadow-2xl transition-all z-50 flex items-center gap-3 ${type==='error'?'bg-slate-900/95 border-red-500/30 text-red-200':'bg-slate-800/90 border-indigo-500/30'}`;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            toastTimeout = setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+        function formatSize(b) { const i = Math.floor(Math.log(b)/Math.log(1024)); return (b/Math.pow(1024,i)).toFixed(2) + ' ' + ['B','KB','MB','GB'][i]; }
+
+        // --- EXPLORER ACTIONS ---
+        function explorerNavigate(p, relative) {
+            if(relative) {
+                // FIX: Logic Back Up (Go Up) Corrected
+                if(p === '..') {
+                    if (curPath.endsWith(":\\") || curPath.endsWith(":\\\\")) return; 
+                    let parts = curPath.split('\\').filter(Boolean);
+                    parts.pop(); 
+                    curPath = parts.join('\\');
+                    if (curPath.length === 2 && curPath.endsWith(':')) curPath += '\\';
+                } else {
+                    curPath = (curPath.endsWith('\\') ? curPath : curPath+'\\') + p;
+                }
+            } else {
+                curPath = p;
+            }
+            if(!curPath.endsWith('\\') && curPath.length > 3) curPath += '\\'; 
+            sendCommand({command: 'list_directory', path: curPath});
+        }
+        function explorerRefresh() { sendCommand({command: 'list_directory', path: curPath}); }
+        function dlFile(n) { sendCommand({command: 'download_file', path: (curPath.endsWith('\\')?curPath:curPath+'\\')+n}); }
+        function delFile(n) { if(confirm('Delete?')) sendCommand({command: 'delete_file', path: (curPath.endsWith('\\')?curPath:curPath+'\\')+n}); }
+        function handleFileUpload(inp) {
+            const f = inp.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = e => { sendCommand({command:'upload_file', path: curPath, filename: f.name, data: e.target.result.split(',')[1]}); showToast("Uploading...", "info"); };
+            r.readAsDataURL(f); inp.value = "";
+        }
+
+        function openModal() { const m = document.getElementById('modal'); m.classList.remove('hidden'); setTimeout(()=> {m.querySelector('div').classList.remove('scale-95','opacity-0'); document.getElementById('task-input').focus();},10); }
+        function closeModal() { const m = document.getElementById('modal'); m.querySelector('div').classList.add('scale-95','opacity-0'); setTimeout(()=>m.classList.add('hidden'), 200); }
+        
+        function runTask() { 
+            let v = document.getElementById('task-input').value; 
+            if(v) { 
+                // Ở Task Run modal, user thường gõ lệnh như cmd, nên giữ logic quote cũ hoặc bỏ đều được
+                // Nhưng tốt nhất là để raw cho đồng bộ
+                sendCommand({command:'start_application', name: v}); 
+                closeModal(); 
+            } 
+        }
+
+        // --- TERMINAL LOGIC ---
+        let currentTerminalCmd = "";
+        const termEl = document.getElementById('term-out');
+        function escapeHTML(str) { return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])); }
+        function buildCurrentLineHTML() { return `<div id="current-line" class="term-input-line mt-1"><span class="prompt">${escapeHTML(curPath.trim())}&gt;</span><span class="whitespace-pre-wrap break-all">${escapeHTML(currentTerminalCmd)}</span><span class="cursor"></span></div>`; }
+        function updateTermLine() { 
+            const existing = document.getElementById('current-line'); if(existing) existing.remove();
+            termEl.insertAdjacentHTML('beforeend', buildCurrentLineHTML());
+            termEl.scrollTop = termEl.scrollHeight;
+        }
+        termEl.addEventListener("click", () => termEl.focus());
+        termEl.addEventListener("keydown", (e) => {
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); currentTerminalCmd += e.key; updateTermLine(); return; }
+            if (e.key === "Enter") { 
+                e.preventDefault(); document.getElementById("current-line")?.remove(); 
+                const div = document.createElement('div'); div.className = "term-line text-slate-300"; div.textContent = `${curPath.trim()}> ${currentTerminalCmd}`; termEl.appendChild(div); 
+                if (currentTerminalCmd) sendCommand({ terminal: currentTerminalCmd, path: curPath }); 
+                currentTerminalCmd = ""; termEl.insertAdjacentHTML('beforeend', buildCurrentLineHTML()); termEl.scrollTop = termEl.scrollHeight; 
+            }
+            else if (e.key === "Backspace") { e.preventDefault(); if (currentTerminalCmd.length > 0) { currentTerminalCmd = currentTerminalCmd.slice(0, -1); updateTermLine(); } }
+        });
+
+        // --- INIT ---
+        const disc = new WebSocket("ws://localhost:5000");
+        disc.onopen = () => setInterval(() => disc.readyState===1 && disc.send(JSON.stringify({type:"GET_LIST"})), 2000);
+        disc.onmessage = e => {
+            const l = JSON.parse(e.data).devices || [];
+            const sel = document.getElementById('device-selector');
+            const cur = sel.value; sel.innerHTML = '<option value="">-- Select Target --</option>';
+            l.forEach(d => sel.add(new Option(`${d.name} (${d.ip})`, `ws://${d.ip}:${d.port}`)));
+            sel.value = cur;
+        };
+        document.getElementById('device-selector').onchange = function() { if(this.value) connect(this.value); };
     </script>
 </body>
 </html>

@@ -1,12 +1,24 @@
 #include "screen.h"
+#include <iostream>
+
+bool IsScreenCapturable() {
+    HDESK hDesktop = OpenInputDesktop(0, FALSE, DESKTOP_SWITCHDESKTOP);
+    if (hDesktop == NULL) return false;
+    CloseDesktop(hDesktop);
+    return true;
+}
 
 cv::Mat captureScreenMat() {
+    if (!IsScreenCapturable()) return cv::Mat();
+
     RECT desktop;
     const HWND hDesktop = GetDesktopWindow();
     GetWindowRect(hDesktop, &desktop);
 
     int width = desktop.right;
     int height = desktop.bottom;
+
+    if (width == 0 || height == 0) return cv::Mat();
 
     HDC hScreenDC = GetDC(nullptr);
     HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
@@ -40,33 +52,71 @@ void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
     g_screen = true;
 
     screen_thread = std::thread([ws_ptr]() {
+        file_logger->info("Screen thread started (Smart Diff).");
+        
+        // 33ms ~ 30 FPS. Chất lượng 85 là cân bằng tốt nhất.
+        const auto FRAME_INTERVAL = std::chrono::milliseconds(33); 
+        const std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 85}; 
+
+        cv::Mat lastFrame; // Lưu khung hình trước đó
+
         try {
             std::vector<BYTE> buf;
 
             while (g_screen.load()) {
-                cv::Mat frame = captureScreenMat();
-                if (frame.empty()) continue;
+                auto start_time = std::chrono::steady_clock::now();
 
-                cv::Mat smallFrame;
-                cv::resize(frame, smallFrame, cv::Size(frame.cols / 3 * 2, frame.rows / 3 * 2));
-                buf.clear();
-                cv::imencode(".jpg", smallFrame, buf, {cv::IMWRITE_JPEG_QUALITY, 100});
-
-                try {
-                    sendMsg(*ws_ptr, "binary", "Screen", buf);
-                } catch (std::exception& e) {
-                    file_logger->error("WebSocket write error in screen thread: {}", e.what());
-                    break;
+                if (!IsScreenCapturable()) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    continue; 
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(5)); 
+                cv::Mat frame = captureScreenMat();
+                if (frame.empty()) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    continue;
+                }
+
+                bool shouldSend = true;
+                
+                if (!lastFrame.empty()) {
+                    cv::Mat diff;
+                    cv::absdiff(frame, lastFrame, diff);
+                    
+                    cv::Scalar meanDiff = cv::mean(diff);
+                    double totalDiff = meanDiff[0] + meanDiff[1] + meanDiff[2];
+
+                    if (totalDiff < 2.0) {
+                        shouldSend = false;
+                    }
+                }
+
+                if (shouldSend) {
+                    buf.clear();
+                    cv::imencode(".jpg", frame, buf, params);
+
+                    try {
+                        sendMsg(*ws_ptr, "binary", "Screen", buf);
+                        lastFrame = frame.clone(); 
+                    } catch (std::exception& e) {
+                        file_logger->error("WebSocket write error: {}", e.what());
+                        break;
+                    }
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                }
+
+                auto end_time = std::chrono::steady_clock::now();
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+                if (elapsed < FRAME_INTERVAL) {
+                    std::this_thread::sleep_for(FRAME_INTERVAL - elapsed);
+                }
             }
         } catch (std::exception& e) {
-            file_logger->error("Screen thread exception: {}", e.what());
+            file_logger->error("Screen exception: {}", e.what());
         }
 
         g_screen = false;
-        file_logger->info("Screen thread stopped.");
     });
 }
 
@@ -90,5 +140,4 @@ void stopScreen() {
             file_logger->error("Reaper: Unknown exception caught joining screen thread.");
         }
     }).detach(); 
-
 }

