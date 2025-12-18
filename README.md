@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pnthuc/cpp-websocket)
+
 # Windows Remote Controller over WebSocket
 > **Đồ án Môn học: Mạng Máy Tính**
 
