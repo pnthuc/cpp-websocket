@@ -54,7 +54,6 @@ void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
     screen_thread = std::thread([ws_ptr]() {
         file_logger->info("Screen thread started (Smart Diff).");
         
-        // 33ms ~ 30 FPS. Chất lượng 85 là cân bằng tốt nhất.
         const auto FRAME_INTERVAL = std::chrono::milliseconds(33); 
         const std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 85}; 
 

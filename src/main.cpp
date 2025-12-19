@@ -38,7 +38,6 @@ void DisableQuickEdit() {
     DWORD prev_mode;
     if (!GetConsoleMode(hInput, &prev_mode)) return;
 
-    // Tắt QuickEdit và Insert Mode, giữ lại các cờ khác
     prev_mode &= ~ENABLE_QUICK_EDIT_MODE;
     prev_mode &= ~ENABLE_INSERT_MODE;
     prev_mode |= ENABLE_EXTENDED_FLAGS;
