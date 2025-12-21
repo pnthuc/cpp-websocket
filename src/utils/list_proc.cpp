@@ -1,15 +1,40 @@
 #include "list_proc.h"
 #include "encode.h" 
-#include <psapi.h>
-#include <tlhelp32.h>
-#include <sstream>
-#include <iomanip>
+#include "lib.h"
 
 #pragma comment(lib, "psapi.lib")
+#pragma comment(lib, "advapi32.lib") 
+
+bool EnableDebugPrivilege() {
+    HANDLE hToken;
+    LUID luid;
+    TOKEN_PRIVILEGES tkp;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) 
+        return false;
+
+    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
+        CloseHandle(hToken);
+        return false;
+    }
+
+    tkp.PrivilegeCount = 1;
+    tkp.Privileges[0].Luid = luid;
+    tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    bool result = AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof(TOKEN_PRIVILEGES), NULL, NULL);
+    CloseHandle(hToken);
+    return result;
+}
 
 std::string get_memory_usage(DWORD pid) {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (NULL == hProcess) return "0 MB";
+    
+    if (NULL == hProcess) {
+        hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    }
+
+    if (NULL == hProcess) return "N/A"; 
 
     PROCESS_MEMORY_COUNTERS pmc;
     std::string result = "0 MB";
@@ -26,6 +51,8 @@ std::string get_memory_usage(DWORD pid) {
 }
 
 void list_processes(websocket::stream<tcp::socket>& ws) {
+    EnableDebugPrivilege();
+
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
         sendMsg(ws, "text", "Error", "Failed to create snapshot");
@@ -62,6 +89,8 @@ void list_processes(websocket::stream<tcp::socket>& ws) {
 }
 
 void handle_kill_process(const nlohmann::json& data, websocket::stream<tcp::socket>& ws) {
+    EnableDebugPrivilege(); 
+
     try {
         if (!data.contains("pid")) return;
         

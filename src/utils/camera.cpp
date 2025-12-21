@@ -10,6 +10,8 @@ void startCamera(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
     camera_thread = std::thread([ws_ptr]() {
         bool camera_ok = false;
         cv::VideoCapture cap;
+        const std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 100};
+
         try {
             cap.open(0);
             if (cap.isOpened())
@@ -25,7 +27,7 @@ void startCamera(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
                     if (frame.empty()) break;
 
                     buf.clear();
-                    cv::imencode(".jpg", frame, buf);
+                    cv::imencode(".jpg", frame, buf, params);
 
                     try {
                         sendMsg(*ws_ptr, "binary", "Camera", buf);

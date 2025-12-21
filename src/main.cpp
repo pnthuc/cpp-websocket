@@ -123,7 +123,6 @@ void session(tcp::socket socket) {
                 if (data.contains("path") && data.contains("filename") && data.contains("data")) {
                     handle_upload_file(data["path"], data["filename"], data["data"]);
                     sendMsg(*ws_ptr, "text", "Info", "File uploaded successfully.");
-                    // Refresh thư mục sau khi upload
                     handle_list_directory(ws_ptr, data["path"]);
                 }
             }
@@ -229,7 +228,7 @@ void session(tcp::socket socket) {
 int main() {
 
     DisableQuickEdit();
-     std::cout.setf(std::ios::unitbuf);
+    std::cout.setf(std::ios::unitbuf);
 
     try {
         net::io_context ioc;

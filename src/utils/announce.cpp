@@ -1,5 +1,6 @@
 #include "announce.h"
-const std::string EXTERNAL_SERVER_HOST = "192.168.1.13"; // IP EXTERNAL SERVER, WARN: CHANGE THIS VALUE
+
+const std::string EXTERNAL_SERVER_HOST = "192.168.1.22"; // IP EXTERNAL SERVER, WARN: CHANGE THIS VALUE
 const std::string EXTERNAL_SERVER_PORT = "5000";      
 const int MY_LISTENING_PORT = 8080;                   
 const std::string MY_DEVICE_NAME = getenv("COMPUTERNAME") ? getenv("COMPUTERNAME") : "UnknownDevice";        

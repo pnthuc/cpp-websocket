@@ -20,19 +20,16 @@ namespace net = boost::asio;
 using tcp = net::ip::tcp;
 using json = nlohmann::json;
 
-// Gửi tin nhắn dạng Text (String) -> Dùng cho main.cpp
 void sendMsg(websocket::stream<tcp::socket>& ws,
              const std::string& type,
              const std::string& what,
              const std::string& data);
 
-// Gửi tin nhắn dạng Binary (ảnh, file)
 void sendMsg(websocket::stream<tcp::socket>& ws,
              const std::string& type,
              const std::string& what,
              const std::vector<BYTE>& buffer);
 
-// [ĐỔI TÊN] Gửi JSON Object -> Để tránh trùng lặp với String
 void sendJsonMsg(websocket::stream<tcp::socket>& ws,
              const std::string& type,
              const std::string& what,

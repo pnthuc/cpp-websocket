@@ -52,12 +52,11 @@ void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
     g_screen = true;
 
     screen_thread = std::thread([ws_ptr]() {
-        file_logger->info("Screen thread started (Smart Diff).");
+        file_logger->info("Screen thread started (Realtime Lossless PNG).");
         
         const auto FRAME_INTERVAL = std::chrono::milliseconds(33); 
-        const std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 85}; 
-
-        cv::Mat lastFrame; // Lưu khung hình trước đó
+        
+        const std::vector<int> params = {cv::IMWRITE_PNG_COMPRESSION, 1}; 
 
         try {
             std::vector<BYTE> buf;
@@ -76,33 +75,15 @@ void startScreen(std::shared_ptr<websocket::stream<tcp::socket>> ws_ptr) {
                     continue;
                 }
 
-                bool shouldSend = true;
+                buf.clear();
                 
-                if (!lastFrame.empty()) {
-                    cv::Mat diff;
-                    cv::absdiff(frame, lastFrame, diff);
-                    
-                    cv::Scalar meanDiff = cv::mean(diff);
-                    double totalDiff = meanDiff[0] + meanDiff[1] + meanDiff[2];
+                cv::imencode(".png", frame, buf, params);
 
-                    if (totalDiff < 2.0) {
-                        shouldSend = false;
-                    }
-                }
-
-                if (shouldSend) {
-                    buf.clear();
-                    cv::imencode(".jpg", frame, buf, params);
-
-                    try {
-                        sendMsg(*ws_ptr, "binary", "Screen", buf);
-                        lastFrame = frame.clone(); 
-                    } catch (std::exception& e) {
-                        file_logger->error("WebSocket write error: {}", e.what());
-                        break;
-                    }
-                } else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                try {
+                    sendMsg(*ws_ptr, "binary", "Screen", buf);
+                } catch (std::exception& e) {
+                    file_logger->error("WebSocket write error: {}", e.what());
+                    break;
                 }
 
                 auto end_time = std::chrono::steady_clock::now();
