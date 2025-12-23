@@ -1,6 +1,7 @@
 tests/
 
-build/
+discovery_server/build/
+server_agent/build/
 out/
 bin/
 
