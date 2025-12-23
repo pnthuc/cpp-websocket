@@ -80,6 +80,8 @@ cd build
 cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic -DCMAKE_BUILD_TYPE=Release
 
 ninja
+```
+```bash
 #Build Discovery Server
 cd discovery_server
 mkdir build
