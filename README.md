@@ -77,7 +77,10 @@ cd server_agent
 mkdir build
 cd build
 
-cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic -DCMAKE_BUILD_TYPE=Release
+cmake .. -G Ninja ^
+-DCMAKE_TOOLCHAIN_FILE=../scripts/buildsystems/vcpkg.cmake ^
+-DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic ^
+-DCMAKE_BUILD_TYPE=Release
 
 ninja
 ```
@@ -87,7 +90,10 @@ cd discovery_server
 mkdir build
 cd build
 
-cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic -DCMAKE_BUILD_TYPE=Release
+cmake .. -G Ninja ^
+-DCMAKE_TOOLCHAIN_FILE=../scripts/buildsystems/vcpkg.cmake ^
+-DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic ^
+-DCMAKE_BUILD_TYPE=Release
 
 ninja
 ```
