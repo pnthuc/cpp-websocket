@@ -21,8 +21,6 @@
 #include "keylogger.h"
 #include "list_app.h"
 #include "camera.h"
-#include "restart.h"
-#include "shutdown.h"
 #include "screen.h"
 #include "list_proc.h"
 #include "terminal.h"

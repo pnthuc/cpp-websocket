@@ -1,7 +1,7 @@
 #include "list_proc.h"
 #include "encode.h" 
 #include "lib.h"
-
+#include "psapi.h"
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "advapi32.lib") 
 

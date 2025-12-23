@@ -14,9 +14,7 @@ add_library(features
     src/utils/screenshot.cpp
     src/utils/list_app.cpp
     src/utils/list_proc.cpp
-    src/utils/shutdown.cpp
     src/utils/camera.cpp
-    src/utils/restart.cpp
     src/utils/base64.cpp
     src/utils/global.cpp
     src/utils/terminal.cpp

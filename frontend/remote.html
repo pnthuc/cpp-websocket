@@ -27,14 +27,16 @@
             align-items: center;
             position: relative;
             background: #000;
+            outline: none; /* Bỏ viền focus */
+            cursor: crosshair; /* [SỬA LỖI] Hiển thị con trỏ dạng chữ thập để dễ aim */
         }
 
         #remote-screen {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            cursor: default; /* Thay bằng crosshair nếu thích */
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            /* Bỏ cursor: none ở đây đi */
         }
 
         /* Thanh công cụ (Toolbar) nổi */
@@ -54,11 +56,8 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             transition: opacity 0.3s, transform 0.3s;
             z-index: 1000;
+            cursor: default; /* Toolbar luôn hiện chuột thường */
         }
-
-        /* Ẩn toolbar khi chuột không ở gần (tuỳ chọn, hiện tại để luôn hiện cho tiện) */
-        /* #toolbar:hover { opacity: 1; transform: translateX(-50%) translateY(0); }
-           body:not(:hover) #toolbar { opacity: 0.5; transform: translateX(-50%) translateY(-10px); } */
 
         /* Nút trong toolbar */
         .tool-btn {
@@ -197,7 +196,7 @@
     </div>
 
     <!-- MÀN HÌNH CHÍNH -->
-    <div id="screen-container">
+    <div id="screen-container" tabindex="0"> <!-- Thêm tabindex để bắt phím -->
         <img id="remote-screen" draggable="false" alt="Remote Screen">
     </div>
 
@@ -218,6 +217,7 @@
         const statusText = document.getElementById('status-text');
         const statusBadge = document.getElementById('status-badge');
         const img = document.getElementById('remote-screen');
+        const container = document.getElementById('screen-container');
         const modal = document.getElementById('connect-modal');
         const wsInput = document.getElementById('ws-input');
         const errorMsg = document.getElementById('error-msg');
@@ -228,6 +228,9 @@
         // --- INIT ---
         const params = new URLSearchParams(window.location.search);
         let wsUrl = params.get('ws');
+
+        // Tự động focus vào màn hình để bắt phím ngay khi load
+        container.focus();
 
         if (wsUrl) {
             startConnection(wsUrl);
@@ -262,11 +265,11 @@
 
         function disconnect() {
             if(ws) ws.close();
-            window.close(); // Đóng tab luôn cho ngầu
+            window.close();
         }
 
         function updateStatus(state) {
-            statusBadge.className = ""; // Reset class
+            statusBadge.className = "";
             statusBadge.classList.add(state);
             
             if (state === 'connected') {
@@ -290,7 +293,9 @@
         function setupWebSocketHandlers() {
             ws.onopen = () => {
                 updateStatus("connected");
+                // Gửi lệnh bắt đầu stream màn hình
                 ws.send(JSON.stringify({ command: "start_screen" }));
+                container.focus();
             };
 
             ws.onmessage = (event) => {
@@ -301,7 +306,7 @@
                         const len = binaryString.length;
                         const bytes = new Uint8Array(len);
                         for (let i = 0; i < len; i++) { bytes[i] = binaryString.charCodeAt(i); }
-                        const blob = new Blob([bytes], { type: 'image/jpeg' });
+                        const blob = new Blob([bytes], { type: 'image/jpeg' }); // Hoặc png tuỳ C++
 
                         if (currentUrl) URL.revokeObjectURL(currentUrl);
                         currentUrl = URL.createObjectURL(blob);
@@ -323,7 +328,7 @@
         // --- CÁC NÚT CHỨC NĂNG ---
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
                 document.getElementById('btn-fullscreen').innerHTML = '<i class="ph ph-corners-in"></i>';
             } else {
                 if (document.exitFullscreen) {
@@ -334,9 +339,6 @@
         }
 
         function sendCtrlAltDel() {
-            // Lưu ý: Windows không cho phép gửi Ctrl+Alt+Del qua phần mềm (bảo mật).
-            // Thay vào đó ta gửi Ctrl+Esc (Mở Start Menu) hoặc Win+L (Lock) để demo.
-            // Để gửi tổ hợp phím phức tạp, server C++ cần hỗ trợ logic giữ phím.
             showToast("Đã gửi lệnh đặc biệt (Demo: Win Key)");
             sendWinKey();
         }
@@ -348,27 +350,41 @@
             }, 100);
         }
 
-        // --- XỬ LÝ CHUỘT & PHÍM (GIỮ NGUYÊN LOGIC CŨ NHƯNG TỐI ƯU HƠN) ---
+        // --- XỬ LÝ CHUỘT ---
         function getTransformedCoordinates(clientX, clientY) {
             const rect = img.getBoundingClientRect();
             if (!img.naturalWidth) return null;
+            
+            // Tính toán tỷ lệ scale (object-fit: contain)
             const scale = Math.min(rect.width / img.naturalWidth, rect.height / img.naturalHeight);
             const displayWidth = img.naturalWidth * scale;
             const displayHeight = img.naturalHeight * scale;
+            
+            // Tính offset do căn giữa
             const offsetX = (rect.width - displayWidth) / 2;
             const offsetY = (rect.height - displayHeight) / 2;
+            
+            // Tọa độ tương đối so với ảnh hiển thị
             const relX = clientX - rect.left;
             const relY = clientY - rect.top;
 
+            // Kiểm tra xem chuột có nằm trong vùng ảnh hay vùng đen
             if (relX < offsetX || relX > offsetX + displayWidth || relY < offsetY || relY > offsetY + displayHeight) return null;
 
-            return { x: (relX - offsetX) / displayWidth, y: (relY - offsetY) / displayHeight };
+            // Chuẩn hóa về 0.0 - 1.0
+            return { 
+                x: (relX - offsetX) / displayWidth, 
+                y: (relY - offsetY) / displayHeight 
+            };
         }
 
         let lastMoveTime = 0;
-        img.addEventListener('mousemove', (e) => {
+        
+        // Gắn sự kiện chuột vào container thay vì img để bắt tốt hơn
+        container.addEventListener('mousemove', (e) => {
             const now = Date.now();
-            if (now - lastMoveTime < 40) return;
+            if (now - lastMoveTime < 30) return; // Limit ~30fps mouse update
+            
             const coords = getTransformedCoordinates(e.clientX, e.clientY);
             if (coords && ws && ws.readyState === 1) {
                 lastMoveTime = now;
@@ -376,24 +392,83 @@
             }
         });
 
-        img.addEventListener('mousedown', (e) => {
-            const coords = getTransformedCoordinates(e.clientX, e.clientY);
-            if (coords && ws && ws.readyState === 1) ws.send(JSON.stringify({ command: "mouse_click", btn: e.button, action: 0 }));
+        container.addEventListener('mousedown', (e) => {
+            if (ws && ws.readyState === 1) ws.send(JSON.stringify({ command: "mouse_click", btn: e.button, action: 0 }));
         });
 
-        img.addEventListener('mouseup', (e) => {
+        container.addEventListener('mouseup', (e) => {
             if (ws && ws.readyState === 1) ws.send(JSON.stringify({ command: "mouse_click", btn: e.button, action: 1 }));
         });
 
+        // Chặn menu chuột phải mặc định
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
+        // --- XỬ LÝ BÀN PHÍM NÂNG CAO ---
+        
+        // Danh sách phím cần chặn sự kiện mặc định của trình duyệt
+        const blockedKeys = [
+            'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+            'Tab', 'Alt', 'Meta', 'ContextMenu'
+        ];
+
+        // Map phím JavaScript code sang Windows Virtual Key Code (VK)
+        // Một số phím JS có code khác với C++ WinAPI
+        const specialKeysMap = {
+            'MetaLeft': 91, 'MetaRight': 92, // Windows Key
+            'ContextMenu': 93,
+            'Backspace': 8, 'Tab': 9, 'Enter': 13, 'ShiftLeft': 160, 'ShiftRight': 161,
+            'ControlLeft': 162, 'ControlRight': 163, 'AltLeft': 164, 'AltRight': 165,
+            'Pause': 19, 'CapsLock': 20, 'Escape': 27, 'Space': 32,
+            'PageUp': 33, 'PageDown': 34, 'End': 35, 'Home': 36,
+            'ArrowLeft': 37, 'ArrowUp': 38, 'ArrowRight': 39, 'ArrowDown': 40,
+            'Insert': 45, 'Delete': 46,
+            'F1': 112, 'F2': 113, 'F3': 114, 'F4': 115, 'F5': 116, 'F6': 117,
+            'F7': 118, 'F8': 119, 'F9': 120, 'F10': 121, 'F11': 122, 'F12': 123,
+            'NumLock': 144, 'ScrollLock': 145
+        };
+
         window.addEventListener('keydown', (e) => {
-            if (ws && ws.readyState === 1) ws.send(JSON.stringify({ command: "key_event", key: e.keyCode, action: 0 }));
-            if ([112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122].includes(e.keyCode) || e.ctrlKey) e.preventDefault();
+            // Chặn hành động mặc định của trình duyệt (ví dụ F5 refresh, Ctrl+S save)
+            if (blockedKeys.includes(e.key) || e.ctrlKey || e.altKey) {
+                e.preventDefault();
+            }
+
+            if (ws && ws.readyState === 1 && !e.repeat) { // Bỏ qua sự kiện lặp phím tự động của OS
+                let vkCode = specialKeysMap[e.code] || e.keyCode;
+                
+                // Fix cho phím Shift/Ctrl/Alt nếu browser chỉ trả về code chung chung
+                if (e.key === 'Shift') vkCode = 16;
+                if (e.key === 'Control') vkCode = 17;
+                if (e.key === 'Alt') vkCode = 18;
+
+                ws.send(JSON.stringify({ command: "key_event", key: vkCode, action: 0 })); // 0 = Down
+            }
         });
 
         window.addEventListener('keyup', (e) => {
-            if (ws && ws.readyState === 1) ws.send(JSON.stringify({ command: "key_event", key: e.keyCode, action: 1 }));
+            if (blockedKeys.includes(e.key) || e.ctrlKey || e.altKey) {
+                e.preventDefault();
+            }
+
+            if (ws && ws.readyState === 1) {
+                let vkCode = specialKeysMap[e.code] || e.keyCode;
+                
+                if (e.key === 'Shift') vkCode = 16;
+                if (e.key === 'Control') vkCode = 17;
+                if (e.key === 'Alt') vkCode = 18;
+
+                ws.send(JSON.stringify({ command: "key_event", key: vkCode, action: 1 })); // 1 = Up
+            }
+        });
+
+        // Bắt sự kiện khi cửa sổ mất focus (ví dụ Alt+Tab ra ngoài) -> Nhả hết phím
+        window.addEventListener('blur', () => {
+            // Logic: Gửi lệnh nhả các phím chức năng để tránh bị kẹt phím bên máy nạn nhân
+            if (ws && ws.readyState === 1) {
+                [16, 17, 18, 91].forEach(k => {
+                    ws.send(JSON.stringify({ command: "key_event", key: k, action: 1 }));
+                });
+            }
         });
 
     </script>

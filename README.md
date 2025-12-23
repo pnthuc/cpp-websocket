@@ -56,9 +56,26 @@ Dự án sử dụng **CMake** để quản lý biên dịch và tự động x�
 
 ### Các bước biên dịch
 
-**Bước 1: Clone dự án và tạo thư mục build**
+**Bước 1: Cài đặt các thư viện**
+```bash
+# 1. Clone vcpkg và cài đặt
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg && ./bootstrap-vcpkg.bat
+
+./vcpkg install boost-beast:x64-mingw-static \
+                opencv:x64-mingw-static \
+                nlohmann-json:x64-mingw-static \
+                spdlog:x64-mingw-static
+```
+
+**Bước 2: Clone dự án và tạo thư mục build**
 ```bash
 git clone https://github.com/pnthuc/cpp-websocket
 cd cpp-websocket
 mkdir build
 cd build
+
+cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic -DCMAKE_BUILD_TYPE=Release
+
+ninja
+```

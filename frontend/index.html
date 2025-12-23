@@ -81,6 +81,7 @@
 
         /* --- SHARP RENDERING --- */
         .rendering-sharp {
+            /* Giúp ảnh sắc nét hơn khi scale, đặc biệt là text */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
@@ -95,7 +96,7 @@
     <aside class="w-72 glass-panel border-r-0 border-r border-white/5 flex flex-col z-20 m-3 rounded-2xl mb-3 overflow-hidden shrink-0">
         <div class="p-6 flex items-center gap-3 border-b border-white/5">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white"><i class="ph-bold ph-cpu text-xl"></i></div>
-            <div><h1 class="text-lg font-bold text-white leading-tight">CPP<span class="text-indigo-400">WebSoc</span></h1><p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Admin Console</p></div>
+            <div><h1 class="text-lg font-bold text-white leading-tight">CPP<span class="text-indigo-400">WebSoc</span></h1><p class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Admin Console v2.0</p></div>
         </div>
 
         <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1" id="sidebar-nav">
@@ -115,12 +116,30 @@
             <button onclick="switchTab('terminal')" id="nav-terminal" class="nav-item group w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border border-transparent"><i class="ph-duotone ph-terminal-window text-lg group-hover:text-orange-400 transition-colors"></i> <span>Terminal</span></button>
         </nav>
         
-        <div class="p-4 bg-black/20 backdrop-blur-sm border-t border-white/5">
-            <div class="relative mb-3">
+        <div class="p-4 bg-black/20 backdrop-blur-sm border-t border-white/5 space-y-3">
+            <!-- SERVER SETTINGS (AUTO DISCOVERY) -->
+            <div class="flex flex-col gap-1">
+                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Discovery Server IP</label>
+                <div class="flex gap-2">
+                    <input type="text" id="discovery-ip" value="localhost" class="flex-1 bg-slate-800/50 border border-white/10 text-white text-xs rounded-lg py-1.5 px-2 outline-none focus:border-indigo-500 font-mono">
+                    <button onclick="reconnectDiscovery()" class="bg-indigo-500/20 text-indigo-400 hover:text-white hover:bg-indigo-500 p-1.5 rounded-lg transition-colors"><i class="ph-bold ph-arrows-clockwise"></i></button>
+                </div>
+            </div>
+
+            <div class="relative">
                 <select id="device-selector" class="w-full bg-slate-800/50 border border-white/10 text-white text-xs rounded-lg py-2 pl-3 pr-8 appearance-none cursor-pointer hover:bg-slate-800 transition"><option value="">-- Scanning --</option></select>
                 <i class="ph-bold ph-caret-down absolute right-3 top-2.5 text-slate-500 pointer-events-none text-xs"></i>
             </div>
-            <div class="flex items-center gap-3 bg-white/5 p-2.5 rounded-lg border border-white/5">
+
+            <div class="flex flex-col gap-1 pt-2 border-t border-white/5 mt-2">
+                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Direct Connect</label>
+                <div class="flex gap-2">
+                    <input type="text" id="manual-ip" placeholder="Client IP (e.g. 192.168.1.5)" class="flex-1 bg-slate-800/50 border border-white/10 text-white text-xs rounded-lg py-1.5 px-2 outline-none focus:border-emerald-500 font-mono">
+                    <button onclick="manualTargetConnect()" class="bg-emerald-500/20 text-emerald-400 hover:text-white hover:bg-emerald-500 p-1.5 rounded-lg transition-colors" title="Connect Directly"><i class="ph-bold ph-plug"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 bg-white/5 p-2.5 rounded-lg border border-white/5 mt-2">
                 <div class="relative flex h-2.5 w-2.5"><span id="ws-ping-dot" class="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 hidden"></span><span id="ws-status-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-600"></span></div>
                 <div class="flex flex-col"><span class="text-[10px] text-slate-400 font-semibold uppercase leading-none mb-0.5">Status</span><span id="ws-status-text" class="text-xs text-slate-500 font-bold leading-none">Offline</span></div>
             </div>
@@ -328,6 +347,9 @@
     <script>
         // --- STATE & CORE ---
         let ws, activeTab = 'dashboard', curPath = 'C:\\', currentTargetUrl = '', toastTimeout, fire_ex = false;
+        let disc = null; // Discovery Socket
+        let discInterval = null;
+
         const state = { screen: false, camera: false, keylogger: false };
         const iconMap = { dashboard: 'ph-squares-four', screen: 'ph-monitor', camera: 'ph-webcam', keylogger: 'ph-keyboard', processes: 'ph-chart-bar', applications: 'ph-app-window', terminal: 'ph-terminal-window', 'file-explorer': 'ph-folder-open' };
         const colorMap = { dashboard: 'text-indigo-400', screen: 'text-emerald-400', camera: 'text-rose-400', keylogger: 'text-amber-400', processes: 'text-cyan-400', applications: 'text-violet-400', terminal: 'text-orange-400', 'file-explorer': 'text-yellow-400' };
@@ -477,7 +499,7 @@
                 return;
             }
 
-            showToast("Rendering Video... Please wait!", "info");
+            showToast("Rendering HQ Video... Please wait!", "info");
 
             const canvas = document.getElementById('recorder-canvas');
             const ctx = canvas.getContext('2d', { alpha: false }); // Tối ưu vẽ không Alpha
@@ -513,7 +535,7 @@
                 a.href = url;
                 a.download = `${type}_record_HQ_${Date.now()}.webm`;
                 a.click();
-                showToast("Video Downloaded!", "success");
+                showToast("HQ Video Downloaded!", "success");
             };
 
             recorder.start();
@@ -664,6 +686,7 @@
             d.className = `relative inline-flex rounded-full h-2.5 w-2.5 ${online?'bg-emerald-500':'bg-slate-600'}`;
             p.classList.toggle('hidden', !online);
 
+            // Cập nhật Uptime Status UI
             const upText = document.getElementById('uptime-text');
             const upDot = document.getElementById('uptime-dot');
             if(online) {
@@ -759,17 +782,92 @@
             else if (e.key === "Backspace") { e.preventDefault(); if (currentTerminalCmd.length > 0) { currentTerminalCmd = currentTerminalCmd.slice(0, -1); updateTermLine(); } }
         });
 
-        // --- INIT ---
-        const disc = new WebSocket("ws://localhost:5000");
-        disc.onopen = () => setInterval(() => disc.readyState===1 && disc.send(JSON.stringify({type:"GET_LIST"})), 2000);
-        disc.onmessage = e => {
-            const l = JSON.parse(e.data).devices || [];
+        // --- DISCOVERY SERVER CONNECTION ---
+        function reconnectDiscovery() {
+            if (discInterval) clearInterval(discInterval);
+            if (disc) disc.close();
+
+            // [FIX] Xóa danh sách cũ ngay lập tức khi bắt đầu kết nối lại
             const sel = document.getElementById('device-selector');
-            const cur = sel.value; sel.innerHTML = '<option value="">-- Select Target --</option>';
-            l.forEach(d => sel.add(new Option(`${d.name} (${d.ip})`, `ws://${d.ip}:${d.port}`)));
-            sel.value = cur;
-        };
+            sel.innerHTML = '<option value="">-- Connecting... --</option>';
+
+            const ip = document.getElementById('discovery-ip').value.trim() || 'localhost';
+            const url = `ws://${ip}:5000`;
+            console.log("Connecting Discovery at:", url);
+
+            try {
+                disc = new WebSocket(url);
+                disc.onopen = () => {
+                    showToast("Discovery Connected", "success");
+                    // [FIX] Cập nhật trạng thái chờ dữ liệu
+                    sel.innerHTML = '<option value="">-- Waiting for data... --</option>';
+                    discInterval = setInterval(() => {
+                        if (disc.readyState === 1) disc.send(JSON.stringify({type:"GET_LIST"}));
+                    }, 2000);
+                };
+                disc.onmessage = e => {
+                    const l = JSON.parse(e.data).devices || [];
+                    const cur = sel.value; 
+                    sel.innerHTML = '<option value="">-- Select Target --</option>';
+                    l.forEach(d => sel.add(new Option(`${d.name} (${d.ip})`, `ws://${d.ip}:${d.port}`)));
+                    
+                    // [FIX] Chỉ giữ lại selection nếu nó vẫn tồn tại trong danh sách mới
+                    let found = false;
+                    for(let i=0; i<sel.options.length; i++) {
+                        if(sel.options[i].value === cur) {
+                            sel.value = cur;
+                            found = true;
+                            break;
+                        }
+                    }
+                };
+                disc.onerror = () => {
+                    showToast("Discovery Error", "error");
+                    // [FIX] Thông báo lỗi trong dropdown
+                    sel.innerHTML = '<option value="">-- Connection Failed --</option>';
+                };
+            } catch(e) {
+                showToast("Invalid Discovery URL", "error");
+                sel.innerHTML = '<option value="">-- Invalid Config --</option>';
+            }
+        }
+
         document.getElementById('device-selector').onchange = function() { if(this.value) connect(this.value); };
+        
+        // [NEW] DIRECT CONNECTION LOGIC
+        function manualTargetConnect() {
+            const ip = document.getElementById('manual-ip').value.trim();
+            if(!ip) { showToast("Vui lòng nhập IP Client!", "error"); return; }
+            
+            // Mặc định kết nối vào port 8080 của Client
+            const url = `ws://${ip}:8080`;
+            
+            // Cập nhật selector để hiển thị kết nối thủ công (Option ảo)
+            const sel = document.getElementById('device-selector');
+            
+            // Kiểm tra xem đã có trong list chưa, nếu chưa thì thêm tạm
+            let exists = false;
+            for(let i=0; i<sel.options.length; i++) {
+                if(sel.options[i].value === url) { 
+                    sel.value = url; 
+                    exists = true; 
+                    break; 
+                }
+            }
+            
+            if(!exists) {
+                const opt = new Option(`Manual (${ip})`, url);
+                sel.add(opt);
+                sel.value = url;
+            }
+
+            showToast(`Connecting direct to ${url}...`, "info");
+            connect(url);
+        }
+
+        // Init Discovery
+        reconnectDiscovery();
+
     </script>
 </body>
 </html>

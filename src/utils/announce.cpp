@@ -1,21 +1,32 @@
 #include "announce.h"
+#include <fstream> 
 
-const std::string EXTERNAL_SERVER_HOST = "192.168.1.22"; // IP EXTERNAL SERVER, WARN: CHANGE THIS VALUE
 const std::string EXTERNAL_SERVER_PORT = "5000";      
 const int MY_LISTENING_PORT = 8080;                   
 const std::string MY_DEVICE_NAME = getenv("COMPUTERNAME") ? getenv("COMPUTERNAME") : "UnknownDevice";        
 const std::string MY_DEVICE_ID = MY_DEVICE_NAME + "_" + std::to_string(MY_LISTENING_PORT);
+
 void announce_once() {
     try {
+        std::string server_host; 
+        std::ifstream file("config.txt");
+        
+        if (!(file >> server_host)) {
+            server_host = "127.0.0.1"; 
+            std::cerr << "[WARN] Cannot read config.txt, using default: " << server_host << std::endl;
+        }
+
         net::io_context ioc;
         tcp::resolver resolver{ioc};
         websocket::stream<tcp::socket> ws{ioc};
 
-        file_logger->info("Connecting to External Server...");
-        std::cerr << "Connecting to External Server..." << std::endl;
-        auto const results = resolver.resolve(EXTERNAL_SERVER_HOST, EXTERNAL_SERVER_PORT);
+        file_logger->info("Connecting to External Server: {}", server_host);
+        std::cerr << "Connecting to External Server: " << server_host << "..." << std::endl;
+        
+        auto const results = resolver.resolve(server_host, EXTERNAL_SERVER_PORT);
         net::connect(ws.next_layer(), results);
-        ws.handshake(EXTERNAL_SERVER_HOST, "/");
+        
+        ws.handshake(server_host, "/");
 
         json payload = {
             {"type", "ANNOUNCE"},

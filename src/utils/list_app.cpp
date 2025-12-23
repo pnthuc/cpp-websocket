@@ -1,6 +1,13 @@
 #include "list_app.h"
 #include "encode.h"
-#include "lib.h"
+#include <windows.h>
+#include <tlhelp32.h>
+#include <psapi.h>
+#include <shlwapi.h>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <filesystem>
 
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "advapi32.lib")
@@ -16,12 +23,10 @@ std::wstring ToLowerW(std::wstring s) {
 
 std::wstring CleanPath(std::wstring path) {
     if (path.empty()) return L"";
-
     if (path.front() == L'\"') {
         size_t q = path.find(L'\"', 1);
         if (q != std::wstring::npos) path = path.substr(1, q - 1);
     }
-
     std::wstring lower = ToLowerW(path);
     size_t exePos = lower.find(L".exe");
     if (exePos != std::wstring::npos) {
@@ -63,14 +68,12 @@ void ScanRegistryKey(HKEY hRoot, const wchar_t* subKey, std::vector<AppEntry>& a
                 std::wstring name = buf;
                 
                 if (!name.empty() && seenNames.find(name) == seenNames.end()) {
-                    
                     DWORD sysComp = 0; 
                     DWORD dwSz = sizeof(sysComp);
                     if (RegQueryValueExW(hSubKey, L"SystemComponent", NULL, NULL, (LPBYTE)&sysComp, &dwSz) == ERROR_SUCCESS && sysComp == 1) {
                         RegCloseKey(hSubKey);
                         continue;
                     }
-
                     if (name.find(L"KB") == 0 && name.length() > 2 && isdigit(name[2])) {
                         RegCloseKey(hSubKey);
                         continue;
@@ -86,12 +89,6 @@ void ScanRegistryKey(HKEY hRoot, const wchar_t* subKey, std::vector<AppEntry>& a
                         if (iconPath.find(L".exe") != std::wstring::npos) {
                             app.execPath = iconPath;
                         }
-                    }
-
-                    if (app.execPath.empty()) {
-                         size = sizeof(buf);
-                         if (RegQueryValueExW(hSubKey, L"InstallLocation", NULL, &type, (LPBYTE)buf, &size) == ERROR_SUCCESS) {
-                         }
                     }
 
                     apps.push_back(app);
@@ -131,7 +128,7 @@ std::vector<ProcShort> GetRunningProcessList() {
                 }
                 CloseHandle(hProc);
             }
-            if (p.path.empty()) p.path = p.name; // Fallback
+            if (p.path.empty()) p.path = p.name;
 
             list.push_back(p);
         } while (Process32NextW(hSnap, &pe));
@@ -147,10 +144,42 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
     std::set<std::wstring> seenNames;
 
     ScanRegistryKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", apps, seenNames);
-    
     ScanRegistryKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall", apps, seenNames);
-    
     ScanRegistryKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall", apps, seenNames);
+
+    const std::vector<std::pair<std::wstring, std::wstring>> systemApps = {
+        {L"Notepad", L"notepad.exe"},
+        {L"Calculator", L"calc.exe"},
+        {L"Command Prompt", L"cmd.exe"},
+        {L"Paint", L"mspaint.exe"},
+        {L"Task Manager", L"taskmgr.exe"},
+        {L"Registry Editor", L"regedit.exe"},
+        {L"Explorer", L"explorer.exe"}
+    };
+
+    WCHAR sysDir[MAX_PATH];
+    if (GetSystemDirectoryW(sysDir, MAX_PATH)) {
+        std::wstring sysPath = sysDir;
+        for (const auto& pair : systemApps) {
+            if (seenNames.find(pair.first) == seenNames.end()) {
+                std::wstring fullPath = sysPath + L"\\" + pair.second;
+                if (fs::exists(fullPath)) {
+                    AppEntry sysApp;
+                    sysApp.displayName = pair.first;
+                    sysApp.execPath = fullPath;
+                    apps.push_back(sysApp);
+                    seenNames.insert(pair.first);
+                } 
+                else {
+                    AppEntry sysApp;
+                    sysApp.displayName = pair.first;
+                    sysApp.execPath = pair.second; 
+                    apps.push_back(sysApp);
+                    seenNames.insert(pair.first);
+                }
+            }
+        }
+    }
 
     auto runningProcs = GetRunningProcessList();
     json arr = json::array();
@@ -158,12 +187,14 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
     for (auto& app : apps) {
         if (!app.execPath.empty()) {
             std::wstring lowerExec = ToLowerW(app.execPath);
+            std::wstring fName = fs::path(lowerExec).filename().wstring();
+
             for (const auto& p : runningProcs) {
                 if (p.path == lowerExec) {
                     app.isRunning = true; 
                     break;
                 }
-                if (fs::path(lowerExec).filename() == p.name) {
+                if (p.name == fName) {
                     app.isRunning = true;
                     break;
                 }
@@ -178,7 +209,7 @@ void list_applications(websocket::stream<tcp::socket>& ws) {
     }
 
     sendMsg(ws, "json", "Applications", arr.dump());
-    if (file_logger) file_logger->info("Listed {} apps (Fast Mode).", arr.size());
+    if (file_logger) file_logger->info("Listed {} apps (Fast Mode + System Apps).", arr.size());
 }
 
 void start_application_exec(const std::string& appPathUtf8) {
@@ -193,9 +224,43 @@ void start_application_exec(const std::string& appPathUtf8) {
 }
 
 void stop_application_by_name(const std::string& exeNameUtf8, websocket::stream<tcp::socket>& ws) {
-    std::string cmd = "taskkill /F /IM \"" + exeNameUtf8 + "\" /T";
-    system(cmd.c_str());
-    sendMsg(ws, "text", "Info", "Sent kill command for: " + exeNameUtf8);
+    std::wstring wExeName = WinEncoding::FromUtf8(exeNameUtf8);
+    if (wExeName.find(L"\\") != std::wstring::npos) {
+        wExeName = fs::path(wExeName).filename().wstring();
+    }
+    wExeName = ToLowerW(wExeName);
+
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnap == INVALID_HANDLE_VALUE) {
+        sendMsg(ws, "text", "Error", "Failed to create snapshot for stopping app.");
+        return;
+    }
+
+    PROCESSENTRY32W pe;
+    pe.dwSize = sizeof(pe);
+    int killCount = 0;
+
+    if (Process32FirstW(hSnap, &pe)) {
+        do {
+            std::wstring currentProc = ToLowerW(pe.szExeFile);
+            if (currentProc == wExeName) {
+                HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
+                if (hProc) {
+                    if (TerminateProcess(hProc, 0)) {
+                        killCount++;
+                    }
+                    CloseHandle(hProc);
+                }
+            }
+        } while (Process32NextW(hSnap, &pe));
+    }
+    CloseHandle(hSnap);
+
+    if (killCount > 0) {
+        sendMsg(ws, "text", "Info", "Stopped " + std::to_string(killCount) + " process(es) of " + exeNameUtf8);
+    } else {
+        sendMsg(ws, "text", "Info", "No running process found for: " + exeNameUtf8);
+    }
 }
 
 void stop_application_exec(DWORD pid, websocket::stream<tcp::socket>& ws) {
